@@ -82,7 +82,7 @@ void taskmain(int argc,char **argv){
     printf("goal=%d\n",goal);
     
     c=chancreate(sizeof(unsigned long),buffer);
-    taskcreate(primetask,nc,32768);
+    taskcreate(primetask,c,32768);
     for(i=2;;i++)
         chansendul(c,i);
         
