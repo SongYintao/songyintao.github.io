@@ -22,7 +22,7 @@ layout: post
 
 ### 2.协程的c语言实现
 
-​	为了更好的剖析协程的运行原理，从轻量级双人协程库`libtask`入手。goroutine和用于goroutine之间通信的channel都是参照libtask库实现的。
+​	为了更好的剖析协程的运行原理，从轻量级协程库`libtask`入手。goroutine和用于goroutine之间通信的channel都是参照libtask库实现的。
 
 ### 3. 协程库概述
 
