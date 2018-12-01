@@ -256,15 +256,15 @@ int taskcreate(void (*fn)(void*),void *arg,uint stack){
 
 ```c
 static void taskscheduler(void) {
-	int i; 
+	int i;
     Task *t;
-	taskdebug("scheduler enter"); 
+	taskdebug("scheduler enter");
     for(;;){
-		if(taskcount == 0) 
-            exit(taskexitval); 
+		if(taskcount == 0)
+            exit(taskexitval);
         t = taskrunqueue.head;
 		if(t == nil){
-			fprint(2, "no runnable tasks! %d tasks stalled\n", taskcount); 
+			fprint(2, "no runnable tasks! %d tasks stalled\n", taskcount);
             exit(1);
         }
         deltask(&taskrunqueue, t);
@@ -275,7 +275,7 @@ static void taskscheduler(void) {
         contextswitch(&taskschedcontext, &t->context);
         //print("back in scheduler\n");
         taskrunning = nil;
-        if(t->exiting){ 
+        if(t->exiting){
             if(!t->system)
     			taskcount--;
 			i = t->alltaskslot;
