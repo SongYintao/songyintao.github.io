@@ -258,8 +258,8 @@ int taskcreate(void (*fn)(void*),void *arg,uint stack){
 static void taskscheduler(void) {
 	int i;
     Task *t;
-	taskdebug("scheduler enter");
-    for(;;){
+    taskdebug("scheduler enter");
+ 	for(;;){
 		if(taskcount == 0)
             exit(taskexitval);
         t = taskrunqueue.head;
@@ -278,7 +278,7 @@ static void taskscheduler(void) {
         if(t->exiting){
             if(!t->system)
     			taskcount--;
-			i = t->alltaskslot;
+            i = t->alltaskslot;
 			alltask[i] = alltask[--nalltask];
 			alltask[i]->alltaskslot = i;
 			free(t);
