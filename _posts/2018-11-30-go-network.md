@@ -1,6 +1,6 @@
 ---
 title: Go基础：网络编程
-subtitle: go网路编程简介
+subtitle: go网络编程简介
 layout: post
 tag: [go]
 ---
