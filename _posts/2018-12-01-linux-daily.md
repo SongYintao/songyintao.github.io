@@ -5,7 +5,7 @@ tag: [linux,shell]
 layout: post
 ---
 
-​	每天一点点，总计学习linux命令。
+​	每天一点点，总结学习linux命令。
 
 ### 1. sysctl
 
