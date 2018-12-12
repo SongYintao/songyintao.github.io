@@ -1,9 +1,4 @@
----
-title: DHCP运行原理
-subtitle: dhcp具体的协议细节
-layout: post
-tag: [dhcp,linux,network,docker,kubernetes]
----
+
 
 ​	DHCP 通常是用于局域网络内的一个通讯协议，他主要藉由客户端传送广播封包给整个物理网段内的所有主机， 若局域网络内有 DHCP 服务器时，才会响应客户端的 IP 参数要求。所以啰，DHCP 服务器与客户端是应该要在同一个物理网段内的。 至于整个 DHCP 封包在服务器与客户端的来来回回情况有点像底下这样：
 
@@ -50,8 +45,6 @@ tag: [dhcp,linux,network,docker,kubernetes]
 - 固定 (Static) IP：
 
   只要那个客户端计算机的网络卡不换掉，那么 MAC 肯定就不会改变，由于 DHCP 可以根据 MAC 来给予固定的 IP 参数租约，所以该计算机每次都能以一个固定的 IP 连上 Internet ！呵呵！ 这种情况比较适合当这部客户端计算机需要用来做为提供区域内的一些网络服务的主机之用 (所以 IP 要固定)。那么如何在 Linux 上面知道网络卡的 MAC 呢？很简单啦！有很多的方式，最简单的方式就是使用 ifconfig 及 arp 来进行：
-
-
 
   ```shell
   [root@www ~]# ifconfig | grep HW 
