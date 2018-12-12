@@ -51,7 +51,7 @@ tag: [dhcp,linux,network,docker,kubernetes]
 
   只要那个客户端计算机的网络卡不换掉，那么 MAC 肯定就不会改变，由于 DHCP 可以根据 MAC 来给予固定的 IP 参数租约，所以该计算机每次都能以一个固定的 IP 连上 Internet ！呵呵！ 这种情况比较适合当这部客户端计算机需要用来做为提供区域内的一些网络服务的主机之用 (所以 IP 要固定)。那么如何在 Linux 上面知道网络卡的 MAC 呢？很简单啦！有很多的方式，最简单的方式就是使用 ifconfig 及 arp 来进行：
 
-  `# 1. 观察自己的 MAC 可用 ifconfig： [root@www ~]# ifconfig | grep HW eth0      Link encap:Ethernet  HWaddr 08:00:27:71:85:BD eth1      Link encap:Ethernet  HWaddr 08:00:27:2A:30:14 # 因为鸟哥有两张网卡，所以有两个硬件地址喔！  # 2. 观察别人的 MAC 可用 ping 配合 arp [root@www ~]# ping -c 3 192.168.1.254 [root@www ~]# arp -n Address        HWtype  HWaddress           Flags Mask   Iface 192.168.1.254  ether   00:0c:6e:85:d5:69   C            eth0 `
+
 
   ```shell
   [root@www ~]# ifconfig | grep HW 
