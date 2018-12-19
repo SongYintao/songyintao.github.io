@@ -107,3 +107,81 @@ ssh-keygen
  cat id_rsa.pub >> authorized_keys 
 ```
 
+### 3.查看当前linux内核版本
+
+```shell
+chen@mylinuxserver:~> cat /proc/version
+Linux version 2.6.5-7.244-smp (geeko@buildhost) (gcc version 3.3.3 (SuSE Linux)) #1 SMP Mon Dec 12 18:32:25 UTC 2005
+```
+
+
+
+### 4. scp拷贝文件及文件夹
+
+```shell
+[root@harbor ~]# scp
+usage: scp [-12346BCpqrv] [-c cipher] [-F ssh_config] [-i identity_file]
+           [-l limit] [-o ssh_option] [-P port] [-S program]
+           [[user@]host1:]file1 ... [[user@]host2:]file2
+```
+
+例如拷贝单个文件命令：
+
+`scp file username@ip:filepath`
+
+说明：`file`是要拷贝的文件名   
+
+`username`:远程登录的用户名，
+
+`ip`：远程服务器ip
+
+`filepath`：远程文件路径
+
+拷贝文件夹命令如下：
+
+```shell
+scp -r file username@ip:filepath
+```
+
+
+
+#### 4. 端口号查看
+
+查看端口使用情况，使用`netstat`命令。
+查看已经连接的服务端口（ESTABLISHED
+　
+
+```shell
+netstat -a
+```
+
+
+查看所有的服务端口（LISTEN，ESTABLISHED）
+　
+
+```shell
+netstat -ap
+```
+
+ 
+
+
+查看8080端口，则可以结合`grep`命令：
+
+ 
+
+```shell
+netstat -ap | grep 8080
+```
+
+ 
+
+
+如查看8888端口，则在终端中输入：
+
+```shell
+lsof -i:8888
+```
+
+若要停止使用这个端口的程序，使用kill +对应的pid即可
+

@@ -209,7 +209,26 @@ subnet NETWORK_IP netmask NETMASK_IP { ... }
 那我的配置文件就会像底下这个样子了：
 
 ```shell
-`[root@www ~]# vim /etc/dhcp/dhcpd.conf # 1. 整体的环境设定 ddns-update-style            none;            <==不要更新 DDNS 的设定 ignore client-updates;                        <==忽略客户端的 DNS 更新功能 default-lease-time           259200;          <==预设租约为 3 天 max-lease-time               518400;          <==最大租约为 6 天 option routers               192.168.100.254; <==这就是预设路由 option domain-name           "centos.vbird";  <==给予一个领域名 option domain-name-servers   168.95.1.1, 139.175.10.20; # 上面是 DNS 的 IP 设定，这个设定值会修改客户端的 /etc/resolv.conf 档案内容  # 2. 关于动态分配的 IP subnet 192.168.100.0 netmask 255.255.255.0 {     range 192.168.100.101 192.168.100.200;  <==分配的 IP 范围      # 3. 关于固定的 IP 啊！     host win7 {         hardware ethernet    08:00:27:11:EB:C2; <==客户端网卡 MAC         fixed-address        192.168.100.30;    <==给予固定的 IP     } } # 相关的设定参数意义，请查询前一小节的介绍，或者 man dhcpd.conf `
+[root@www ~]# vim /etc/dhcp/dhcpd.conf 
+# 1. 整体的环境设定 
+ddns-update-style            none;            <==不要更新 DDNS 的设定 
+ignore client-updates;                        <==忽略客户端的 DNS 更新功能 
+default-lease-time           259200;          <==预设租约为 3 天
+max-lease-time               518400;          <==最大租约为 6 天 
+option routers               192.168.100.254; <==这就是预设路由 
+option domain-name           "centos.vbird";  <==给予一个领域名 
+option domain-name-servers   168.95.1.1, 139.175.10.20; 
+# 上面是 DNS 的 IP 设定，这个设定值会修改客户端的 /etc/resolv.conf 档案内容  
+# 2. 关于动态分配的 IP 
+subnet 192.168.100.0 netmask 255.255.255.0 
+{     
+	range 192.168.100.101 192.168.100.200;  <==分配的 IP 范围      
+	# 3. 关于固定的 IP 啊！     
+	host win7 {         
+		hardware ethernet    08:00:27:11:EB:C2; <==客户端网卡 MAC         
+		fixed-address        192.168.100.30;    <==给予固定的 IP     
+	} 
+} # 相关的设定参数意义，请查询前一小节的介绍，或者 man dhcpd.conf
 ```
 
 够简单吧！这样就设定好了！你可以复制上头的数据然后修改一下，让里头的 IP 参数符合你的环境， 就能够设定好你的 DHCP 服务器了。接下来理论上你就能够启动 `dhcp` 了。不过，在某些早期的 Linux distribution 上面， 当你的 Linux 主机具有多个接口时，你的一个设定可能会让多个接口同时来监听，那就可能会发生错误了。
@@ -217,7 +236,7 @@ subnet NETWORK_IP netmask NETMASK_IP { ... }
 举例来说，我们现在的设定是 **192.168.100.0/24** 这个在 eth1 上头的网域，假设你还有一个界面 eth2 在 192.168.2.0/24 好了， 那万一你的 DHCP 同时监听两块接口的话，想一想，如果 192.168.2.0/24 网域的客户端发送出 dhcp 封包的要求时， 他会取得什么 IP ？当然是 192.168.100.X ！所以啰，我们就得要针对 dhcpd 这个执行文件设定他监听的接口， 而不是针对所有的接口都监听啊！你说是吧！^_^！那如何处理呢？在 CentOS (Red Hat 系统) 可以这样做：
 
 ```shell
-`[root@www ~]# vim /etc/sysconfig/dhcpd DHCPDARGS="eth0" `
+[root@www ~]# vim /etc/sysconfig/dhcpd DHCPDARGS="eth0"
 ```
 
 不过这个动作在 CentOS 5.x 以后的版本上面已经不需要了，因为新版本的 dhcp 会主动的分析服务器的网段与实际的 dhcpd.conf 设定， 如果两者无法吻合，就会有错误提示，人性化多了。 ^_^！接下来我们可以开始启动 dhcp 试看看啰！
@@ -252,7 +271,16 @@ subnet NETWORK_IP netmask NETMASK_IP { ... }
 如果你有仔细的瞧过第二章的[网络基础](http://linux.vbird.org/linux_server/0110network_basic.php)的话，那么应该还会记得那个 [/etc/hosts (第四章 4.4.1)](http://linux.vbird.org/linux_server/0130internet_connect.php#problem_hosts) 会影响内部计算机在联机阶段的等待时间吧？那么我现在使用 DHCP 之后，糟糕！我怎么知道哪一部 PC 连上我的主机，那要怎么填写 /etc/hosts 的内容呢？这真是太简单了！就将所有可能的计算机 IP 都加进去该档案呀！ ^_^ ！以鸟哥为例，在这个例子中，鸟哥的分配的 IP 至少有 192.168.100.30, 192.168.100.101 ~ 192.168.100.200 ，所以 /etc/hosts 可以写成：
 
 ```shell
-`[root@www ~]# vim /etc/hosts 127.0.0.1　　 localhost.localdomain localhost 192.168.100.254   vbird-server 192.168.100.30 　 win7 192.168.100.101 　dynamic-101 192.168.100.102 　dynamic-102 ....(中间省略).... 192.168.100.200   dynamic-200 `
+[root@www ~]# vim /etc/hosts 
+127.0.0.1　　 localhost.localdomain localhost 192.168.100.254   
+vbird-server 192.168.100.30 　 
+win7 192.168.100.101 　
+dynamic-101 192.168.100.102 　
+dynamic-102 
+....
+(中间省略)
+.... 
+192.168.100.200   dynamic-200
 ```
 
 这样一来，所有可能连进来的 IP 都已经有纪录了，哈哈！当然没有什么大问题啰！ ^_^！不过， 更好的解决方案则是架设内部的 DNS 服务器，这样一来，内部的其他 Linux 服务器也不必更改 /etc/hosts 就能够取得每部主机的 IP 与主机名对应，那样就更加妥当啦！
@@ -268,13 +296,51 @@ DHCP 的客户端可以是 Windows 也可以是 Linux 呢！鸟哥的网域内�
 Linux 的网络参数设定还记得吧？不记得的话就得要打屁股了！在[第四章 (4.2.2)](http://linux.vbird.org/linux_server/0130internet_connect.php#connect_auto) 我们谈过自动取得 IP 的方式，设定真的很简单：
 
 ```shell
-`[root@clientlinux ~]# vim /etc/sysconfig/network-scripts/ifcfg-eth0 DEVICE=eth0 NM_CONTROLLED=no ONBOOT=yes BOOTPROTO=dhcp  <==就是他！指定这一个就对了！  [root@clientlinux ~]# /etc/init.d/network restart `
+[root@clientlinux ~]# vim /etc/sysconfig/network-scripts/ifcfg-eth0 
+DEVICE=eth0 
+NM_CONTROLLED=no 
+ONBOOT=yes 
+BOOTPROTO=dhcp  <==就是他！指定这一个就对了！  
+[root@clientlinux ~]# /etc/init.d/network restart
 ```
 
 同时记得要拿掉预设路由的设定喔！改完之后，就将我们的整个网络重新启动即可 (不要使用 ifdown 与 ifup ，因为还有预设路由要设定！)。请注意，如果你是在远程进行这个动作， 你的联机『肯定会挂掉！』，因为网络卡被你关了嘛！呵呵！所以请在本机前面才进行喔！如果执行的结果有找到正确的 DHCP 主机，那么几个档案可能会被更动喔：
 
 ```shell
-`# 1. DNS 的 IP 会被更动呢！查阅一下 resolv.conf 先： [root@clientlinux ~]# cat /etc/resolv.conf search centos.vbird      <==还记得设定过 domain-name 否？ domain centos.vbird      <==还记得设定过 domain-name 否？ nameserver 168.95.1.1    <==这就是我们在 dhcpd.conf内的设定值 nameserver 139.175.10.20  # 2. 观察一下路由啦！ [root@clientlinux ~]# route -n Kernel IP routing table Destination    Gateway         Genmask        Flags Metric Ref  Use Iface 192.168.100.0  0.0.0.0         255.255.255.0  U     0      0      0 eth0 0.0.0.0        192.168.100.254 0.0.0.0        UG    0      0      0 eth0 # 嗯！没错！路由也被正确的捉到了！OK的啦！  # 3. 察看一下客户端的指令吧！ [root@clientlinux ~]# netstat -tlunp | grep dhc Proto Recv-Q Send-Q Local Address  Foreign Address State  PID/Program name udp        0      0 0.0.0.0:68     0.0.0.0:*              1694/dhclient # 你没看错！确实是有个小程序在监测 DHCP 的联机状态吶！  # 4. 看一看客户端租约所记载的信息吧！ [root@clientlinux ~]# cat /var/lib/dhclient/dhclient* lease {   interface "eth0";   fixed-address 192.168.100.101; <==取得的 IP 呦！   option subnet-mask 255.255.255.0;   option routers 192.168.100.254;   option dhcp-lease-time 259200;   option dhcp-message-type 5;   option domain-name-servers 168.95.1.1,139.175.10.20;   option dhcp-server-identifier 192.168.100.254;   option domain-name "centos.vbird";   renew 4 2011/07/28 05:01:24; <==下一次预计更新 (renew) 的时间点   rebind 5 2011/07/29 09:06:36;   expire 5 2011/07/29 18:06:36; } # 这个档案会记录该适配卡所曾经要求过的 DHCP 信息喔！重要！ # 有没有看出来，他几乎就与你设定的 /etc/dhcp/dhcpd.conf 类似？ ^_^ `
+# 1. DNS 的 IP 会被更动呢！查阅一下 resolv.conf 先： 
+[root@clientlinux ~]# cat /etc/resolv.conf 
+search centos.vbird      <==还记得设定过 domain-name 否？ 
+domain centos.vbird      <==还记得设定过 domain-name 否？ 
+nameserver 168.95.1.1    <==这就是我们在 dhcpd.conf内的设定值 
+nameserver 139.175.10.20  
+# 2. 观察一下路由啦！ 
+[root@clientlinux ~]# route -n 
+Kernel IP routing table Destination    Gateway         Genmask        Flags Metric Ref  Use Iface 
+192.168.100.0  0.0.0.0         255.255.255.0  U     0      0      0 eth0 0.0.0.0        192.168.100.254 0.0.0.0        UG    0      0      0 eth0 
+# 嗯！没错！路由也被正确的捉到了！OK的啦！  
+# 3. 察看一下客户端的指令吧！ 
+[root@clientlinux ~]# netstat -tlunp | grep dhc 
+Proto Recv-Q Send-Q Local Address  Foreign Address State  PID/Program name udp        
+0      0 0.0.0.0:68     0.0.0.0:*              1694/dhclient 
+# 你没看错！确实是有个小程序在监测 DHCP 的联机状态吶！  
+# 4. 看一看客户端租约所记载的信息吧！ 
+[root@clientlinux ~]# cat /var/lib/dhclient/dhclient* 
+lease {   
+interface "eth0";   
+fixed-address 192.168.100.101; <==取得的 IP 呦！   
+option subnet-mask 255.255.255.0;   
+option routers 192.168.100.254;   
+option dhcp-lease-time 259200;   
+option dhcp-message-type 5;   
+option domain-name-servers 168.95.1.1,139.175.10.20;   
+option dhcp-server-identifier 192.168.100.254;   
+option domain-name "centos.vbird";   
+renew 4 2011/07/28 05:01:24; <==下一次预计更新 (renew) 的时间点   
+rebind 5 2011/07/29 09:06:36;   
+expire 5 2011/07/29 18:06:36; 
+} 
+# 这个档案会记录该适配卡所曾经要求过的 DHCP 信息喔！重要！ 
+# 有没有看出来，他几乎就与你设定的 /etc/dhcp/dhcpd.conf 类似？ ^_^ 
 ```
 
 有没有发现其实你的客户端取得的数据都被记载在 `/var/lib/dhclient/dhclient*-eth0.leases` 里头啊？ 如果你有多张网卡，那么每张网卡自己的 DHCP 要求就会被写入到不同档名的档案当中去！ 观察该档案就知道你的数据是如何啰！这可也是挺重要的呦！
