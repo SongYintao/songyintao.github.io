@@ -2,7 +2,7 @@
 title: kubernetes dashboard trouble shooot
 subtitle: k8s看板问题定位
 layout: post
-tag: [k8s,dashboard]
+tags: [k8s,dashboard]
 ---
 
 最近，在部署测试环境的dashborad。按照git上面的部署方式，发现部署总是失败的。通过查看日志，dashboard连接master节点api-server时报错。提示bad certification。
