@@ -89,6 +89,8 @@ VPA还有一个名为VPA Recommender的有趣功能。它监视所有pod的历�
 
 [git地址](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler)
 
+[设计文档](https://github.com/kubernetes/community/blob/master/contributors/design-proposals/autoscaling/vertical-pod-autoscaler.md)
+
 整体架构
 
 
@@ -118,6 +120,22 @@ VPA还有一个名为VPA Recommender的有趣功能。它监视所有pod的历�
 - **update model with fresh usage samples from Metrics API,**
 - **compute new recommendation for each VPA,**
 - **put any changed recommendations into the VPA resources.**
+
+
+
+### Recommendation model
+
+VPA controls the request (memory and CPU) of containers. In MVP it always sets the limit to infinity. It is not yet clear whether there is a use-case for VPA setting the limit.
+
+The request is calculated based on analysis of the current and previous runs of the container and other containers with similar properties (name, image, command, args). The recommendation model (MVP) assumes that the memory and CPU consumption are independent random variables with distribution equal to the one observed in the last N days (recommended value is N=8 to capture weekly peaks). A more advanced model in future could attempt to detect trends, periodicity and other time-related patterns.
+
+For CPU the objective is to **keep the fraction of time when the container usage exceeds a high percentage (e.g. 95%) of request below a certain threshold** (e.g. 1% of time). In this model the "CPU usage" is defined as mean usage measured over a short interval. The shorter the measurement interval, the better the quality of recommendations for spiky, latency sensitive workloads. Minimum reasonable resolution is 1/min, recommended is 1/sec.
+
+For memory the objective is to **keep the probability of the container usage exceeding the request in a specific time window below a certain threshold** (e.g. below 1% in 24h). The window must be long (≥ 24h) to ensure that evictions caused by OOM do not visibly affect (a) availability of serving applications (b) progress of batch computations (a more advanced model could allow user to specify SLO to control this).
+
+#### Handling OOMs
+
+When a container is evicted due to exceeding available memory, its actual memory requirements are not known (the amount consumed obviously gives the lower bound). This is modelled by translating OOM events to artificial memory usage samples by applying a "safety margin" multiplier to the last observed usage.
 
 具体的算法有待研究。。。。（to be continue）
 
