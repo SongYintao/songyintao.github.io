@@ -35,7 +35,7 @@ Kubernetes是如何对Resource、Group和Version进行解析，从而在Kubernet
 
 **最后，Kubernets会匹配API对象的资源类型。**
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/kubernetes-1.png)
+![](../img/kubernetes-1.png)
 
 
 
@@ -110,7 +110,7 @@ func main() {
 
 详细解释一下自定义控制器的工作原理。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/kubernetes-2.png)
+![](../img/kubernetes-2.png)
 
 
 

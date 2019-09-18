@@ -36,7 +36,7 @@ layout: post
 
 当然网络包的格式很复杂，这个程序也很复杂。**复杂的程序都要分层，这是程序设计的要求**。比如，复杂的电商还会分数据库层、缓存层、Compose 层、Controller 层和接入层，每一层专注做本层的事情。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/network1.jpg)
+![](../img/network1.jpg)
 
 ```
 当一个网络包从一个网口经过的时候，你看到了，首先先看看要不要请进来，处理一把。有的网口配置
@@ -127,13 +127,13 @@ Linux 默认的逻辑是，如果这是一个跨网段的调用，它便不会�
 
 格式就像这样: 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/dhcp格式.png)如果一个网络管理员在网络里面配置了**DHCP Server**的话，他就相当于这些 IP 的管理员。他立刻能知道 来了个“新人”。这个时候，我们可以体会 MAC 地址唯一的重要性了。当一台机器带着自己的 MAC 地址加入一个网络的时候，MAC 是它唯一的身份，如果连这个都重复了，就没办法配置了。 
+![](../img/dhcp格式.png)如果一个网络管理员在网络里面配置了**DHCP Server**的话，他就相当于这些 IP 的管理员。他立刻能知道 来了个“新人”。这个时候，我们可以体会 MAC 地址唯一的重要性了。当一台机器带着自己的 MAC 地址加入一个网络的时候，MAC 是它唯一的身份，如果连这个都重复了，就没办法配置了。 
 
 **只有 MAC 唯一，IP 管理员才能知道这是一个新人，需要租给它一个 IP 地址，这个过程我们称为DHCP Offer**。同时，**DHCP Server** 为此客户保留为它提供的 IP 地址，从而不会为其他 DHCP 客户分配此 IP 地址。 
 
 **DHCP Offer 的格式**就像这样，里面有给新人分配的地址。 
 
-​	![](/Users/nali/songyintao/SongYintao.github.io/img/dhcp-offer.png)
+​	![](../img/dhcp-offer.png)
 
 **DHCP Server** 仍然**使用广播地址作为目的地址**，因为，**此时请求分配 IP 的新人还没有自己的 IP**。DHCP Server 回复说，我分配了一个可用的 IP 给你，你看如何?**除此之外，服务器还发送了子网掩码、网关和 IP 地址租用期**等信息。
 
@@ -215,7 +215,7 @@ next-server 192.168.1.180;
 
 最后，启动 Linux 内核。一旦启动了操作系统，以后就啥都好办了。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/pxe-follow.png)
+![](../img/pxe-follow.png)
 
 ### 三、从物理层到MAC层
 
@@ -262,7 +262,7 @@ Hub 采取的是广播的模式，如果每一台电脑发出的包，宿舍的�
 
 解决第一个问题就牵扯到第二层的网络包格式。对于以太网，第二层的最开始，就是目标的 MAC 地址和源的MAC 地址。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/mac-protocol.png)
+![](../img/mac-protocol.png)
 
 ​	接下来是类型，大部分的类型是 IP 数据包，然后 IP 里面包含 TCP、UDP，以及 HTTP 等，这都是里层 封装的事情。 
 
@@ -274,15 +274,15 @@ Hub 采取的是广播的模式，如果每一台电脑发出的包，宿舍的�
 
 ​	这里还有一个没有解决的问题，**当源机器知道目标机器的时候，可以将目标地址放入包里面，如果不知道呢?**一个广播的网络里面接入了 N 台机器，我怎么知道每个 MAC 地址是谁呢?**这就是ARP 协议，也就是已知 IP 地址，求 MAC 地址的协议。**
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/arp-step1.png)
+![](../img/arp-step1.png)
 
 在一个局域网里面，当知道了 IP 地址，不知道 MAC 怎么办呢?靠“吼”。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/arp-step2.png)
+![](../img/arp-step2.png)
 
 广而告之，发送一个广播包，谁是这个 IP 谁来回答。具体询问和回答的报文就像下面这样:
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/arp-step3.png)
+![](../img/arp-step3.png)
 
 为了避免每次都用 ARP 请求，**机器本地也会进行 ARP 缓存**。当然机器会不断地上线下线，IP 也可能会变，所以 **ARP 的 MAC 地址缓存过一段时间就会过期**。
 
@@ -311,7 +311,7 @@ Hub 采取的是广播的模式，如果每一台电脑发出的包，宿舍的�
 ​	我们常见到的办公室大多是一排排的桌子，每个桌子都有网口，一排十几个座位就有十几个网口，一个楼层就会有几十个甚至上百个网口。如果算上所有楼层，这个场景自然比你宿舍里的复杂多了。具体哪里复杂呢?我来给你具体讲解。
 ​	首先，这个时候，**一个交换机肯定不够用，需要多台交换机，交换机之间连接起来，就形成一个稍微复杂的拓扑结构**。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/交换机-step1.png)
+![](../img/交换机-step1.png)
 
 ​	我们先来看两台交换机的情形。两台交换机连接着三个局域网，每个局域网上都有多台机器。如果机器 1 只知道机器 4 的 IP 地址，当它想要访问机器 4，把包发出去的时候，它必须要知道机器 4 的 MAC 地 址。 
 
@@ -329,7 +329,7 @@ Hub 采取的是广播的模式，如果每一台电脑发出的包，宿舍的�
 
 ​	例如这个图，当两个交换机将两个局域网同时连接起来的时候。你可能会觉得，这样反而有了高可用性。但是却不幸地出现了环路。出现了环路会有什么结果呢?
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/交换机-环路.png)
+![](../img/交换机-环路.png)
 
 ​	我们来想象一下机器1访问机器2的过程。一开始，机器1并不知道机器2的MAC地址，所以它需要发起一个ARP的广播。广播到达机器2，机器2会把MAC地址返回来，看起来没有这 两个交换机什么事情。 
 
@@ -349,7 +349,7 @@ Hub 采取的是广播的模式，如果每一台电脑发出的包，宿舍的�
 
 ​	STP协议比较复杂，一开始很难看懂，但是其实这是一场血雨腥风的武林比武或者华山论剑，最终决出五岳盟主的方式。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/stp.png)
+![](../img/stp.png)
 
 在STP协议里面有很多概念，译名就非常拗口，但是我一作比喻，你很容易就明白了。
 
@@ -367,11 +367,11 @@ Hub 采取的是广播的模式，如果每一台电脑发出的包，宿舍的�
 
 - 一开始，江湖纷争，异常混乱。大家都觉得自己是掌门，谁也不服谁。于是，所有的交换机都认为自己是掌门，每个网桥都被分配了一个ID。这个ID里有管理员分配的优先级，当然网络管理员知道哪些交换机贵，哪些交换机好，就会**给它们分配高的优先级**。这种交换机生下来武功就很高，起步就是乔峰。
 
-​	![](/Users/nali/songyintao/SongYintao.github.io/img/stp-1.png)
+​	![](../img/stp-1.png)
 
 - 既然都是掌门，互相都连着网线，就互相发送BPDU来比功夫呗。这一比就发现，有人是岳不群，有人是封不平，赢的接着当掌门，输的就只好做小弟了。当掌门的还会继续发BPDU，而输的人就没有机会了。它们只有在收到掌门发的BPDU的时候，转发一下，表示服从命令。
 
-   ![](/Users/nali/songyintao/SongYintao.github.io/img/stp-2.png)
+   ![](../img/stp-2.png)
 
 - 数字表示优先级。就像这个图，5和6碰见了，6的优先级低，所以乖乖做小弟。于是一个小门派形成，5是掌门，6是小弟。其他诸如1-7、2-8、3-4这样的小门派，也诞生了。于是江湖出现了很多小的门派，小的门派，接着合并。
 
@@ -381,7 +381,7 @@ Hub 采取的是广播的模式，如果每一台电脑发出的包，宿舍的�
 
 ​	当5碰到了1，掌门碰见掌门，1觉得自己是掌门，5也刚刚跟别人PK完成为掌门。这俩掌门比较功夫，最终1胜出。于是输掉的掌门5就会率领所有的小弟归顺。结果就是1成为大掌门。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/stp-3.png)
+![](../img/stp-3.png)
 
 **情形二：同门相遇**
 
@@ -389,7 +389,7 @@ Hub 采取的是广播的模式，如果每一台电脑发出的包，宿舍的�
 
 ​	我们再来看，假如1和6相遇。6原来就拜在1的门下，只不过6的上司是5，5的上司是1。1发现，6距离我才只有2，比从5这里过来的5（=4+1）近多了，那6就直接汇报给我吧。于是，5和6分别汇报给1。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/stp-4.png)
+![](../img/stp-4.png)
 
 
 ​	同门相遇还可以是小弟相遇。这个时候就要比较谁和掌门的关系近，当然近的当大哥。刚才5和6同时汇报给1了，后来5和6再比较功夫的时候发现，5你直接汇报给1距离是4，如果5汇报给6再汇报给1，距离只有2+1=3，所以5干脆拜6为上司。
@@ -398,7 +398,7 @@ Hub 采取的是广播的模式，如果每一台电脑发出的包，宿舍的�
 
 ​	小弟拿本帮掌门和这个掌门比较，赢了，这个掌门拜入门来。输了，会拜入新掌门，并且逐渐拉拢和自己连接的兄弟，一起弃暗投明。
 
- ![](/Users/nali/songyintao/SongYintao.github.io/img/stp-5.png)
+ ![](../img/stp-5.png)
 
 ​	例如，2和7相遇，虽然7是小弟，2是掌门。就个人武功而言，2比7强，但是7的掌门是1，比2牛，所以没办法，2要拜入7的门派，并且连同自己的小弟都一起拜入。
 
@@ -406,7 +406,7 @@ Hub 采取的是广播的模式，如果每一台电脑发出的包，宿舍的�
 
 ​	各自拿掌门比较，输了的拜入赢的门派，并且逐渐将与自己连接的兄弟弃暗投明。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/stp-6.png)
+![](../img/stp-6.png)
 
 ​	例如，5和4相遇。虽然4的武功好于5，但是5的掌门是1，比4牛，于是4拜入5的门派。后来当3和4相遇的时候，3发现4已经叛变了，4说我现在老大是1，比你牛，要不你也来吧， 于是3也拜入1。
 
@@ -426,14 +426,14 @@ Hub 采取的是广播的模式，如果每一台电脑发出的包，宿舍的�
 
 ​	另外一种方式是**虚拟隔离**，就是用我们常说的VLAN，或者叫**虚拟局域网**。使用VLAN，一个交换机上会连属于多个局域网的机器，那交换机怎么区分哪个机器属于哪个局域网呢？
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/vlan-1.png)
+![](../img/vlan-1.png)
 
 ​	我们只需要**在原来的二层的头上加一个TAG，里面有一个VLAN ID，一共12位**。为什么是12位呢?因为12位可以划分**4096个VLAN。这样是不是还不够啊**。现在的情况证明，目前云计算厂商里面绝对不止4096个用户。当然每个用户需要一个VLAN了啊，怎么办呢，这个我们在后面的章节再说。
 
 ​	如果我们买的交换机是支持VLAN的，**当这个交换机把二层的头取下来的时候，就能够识别这个VLAN ID**。这样**只有相同VLAN的包，才会互相转发**，不同VLAN的包，是看不到的。
 ​	这样广播问题和安全问题就都能够解决了。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/vlan-2.png)
+![](../img/vlan-2.png)
 
 ​	我们可以设置交换机每个口所属的VLAN。如果某个口坐的是程序员，他们属于VLAN 10;如果某个口坐的是人事，他们属于VLAN 20;如果某个口坐的是财务，他们属于VLAN30。这样，财务发的包，交换机只会转发到VLAN 30的口上。程序员啊，你就监听VLAN 10吧，里面除了代码，啥都没有。
 
@@ -525,7 +525,7 @@ ip route add default scope global nexthop via 100.100.100.1 weight 1 nexthop via
 ​	使用动态路由路由器，可以根据路由协议算法生成动态路由表，随网络运行状况的变化而变化。那路由算法是什么样的呢?
 ​	我们可以想象唐僧西天取经，需要解决两大问题，一个是在每个国家如何找到正确的路，去换通关文牒、吃饭、休息;一个是在国家之间，野外行走的时候，如何找到正确的路、水源的问题。
 
-​	![](/Users/nali/songyintao/SongYintao.github.io/img/route-1.png)
+​	![](../img/route-1.png)
 
 ​	无论是一个国家内部，还是国家之间，**我们都可以将复杂的路径，抽象为一种叫作图的数据结构**。至于
 唐僧西行取经，肯定想走得路越少越好，道路越短越好，因而这就转化成为如何在途中找到最短路径的问题。
@@ -571,7 +571,7 @@ ip route add default scope global nexthop via 100.100.100.1 weight 1 nexthop via
 
 ​	**内部网关协议的重点就是找到最短的路径**。在一个组织内部，路径最短往往最优。**当然有时候 OSPF 可以发现多个最短的路径，可以在这多个路径中进行负载均衡，这常常被称为等价路由**。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/route-2.png)
+![](../img/route-2.png)
 
 ​	这一点非常重要。**有了等价路由，到一个地方去可以有相同的两个路线，可以分摊流量，还可以当一条路不通的时候，走另外一条路。**这个在后面我们讲数据中心的网络的时候，**一般应用的接入层会有负载均衡 LVS。它可以和 OSPF 一起，实现高吞吐量的接入层设计**。
 
@@ -597,7 +597,7 @@ ip route add default scope global nexthop via 100.100.100.1 weight 1 nexthop via
 
 **Transit AS**:有多个连接连到其他的 AS，并且可以帮助其他的 AS 传输包。例如主干网。 **每个自治系统都有边界路由器，通过它和外面的世界建立联系**。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/route-3.png)
+![](../img/route-3.png)
 
 **BGP 又分为两类，eBGP 和 iBGP**。
 
@@ -650,7 +650,7 @@ ip route add default scope global nexthop via 100.100.100.1 weight 1 nexthop via
 
 ​	无论**应用程序写的使用 TCP 传数据，还是 UDP 传数据，都要监听一个端口**。**正是这个端口，用来区分应用程序，要不说端口不能冲突呢**。两个应用监听一个端口，到时候包给谁呀?所以，按理说，无论是 TCP 还是 UDP 包头里面应该有端口号，根据端口号，将数据交给相应的应用程序。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/udp-1.png)
+![](../img/udp-1.png)
 
 ​	当我们看到 UDP 包头的时候，发现的确有端口号，有源端口号和目标端口号。因为是两端通信嘛，这很好理解。但是你还会发现，UDP 除了端口号，再没有其他的了。和下两节要讲的 TCP 头比起来，这个简直简单得一塌糊涂啊!
 
@@ -759,7 +759,7 @@ ip route add default scope global nexthop via 100.100.100.1 weight 1 nexthop via
 #### 1.TCP 包头格式
 ​	我们先来看 TCP 头的格式。从这个图上可以看出，它比 UDP 复杂得多。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/tcp-1.png)
+![](../img/tcp-1.png)
 
 ​	**首先，源端口号和目标端口号是不可少的**，这一点和 UDP 是一样的。如果没有这两个端口号。数据就不知道应该发给哪个应用。 
 
@@ -832,7 +832,7 @@ A: 您好 B。
 
 ​	好了，**双方终于建立了信任，建立了连接**。前面也说过，**为了维护这个连接，双方都要维护一个状态机，在连接建立的过程中，双方的状态变化时序图就像这样**。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/tcp-2.png)
+![](../img/tcp-2.png)
 
 ​	**一开始，客户端和服务端都处于 CLOSED 状态**。**先是服务端主动监听某个端口，处于 LISTEN 状态**。然后**客户端主动发起连接 SYN**，**之后处于 SYN-SENT 状态**。**服务端收到发起的连接，返回 SYN，并且ACK 客户端的 SYN，之后处于 SYN-RCVD 状态**。**客户端收到服务端发送的 SYN 和 ACK 之后，发送ACK 的 ACK，之后处于 ESTABLISHED 状态，因为它一发一收成功了。服务端收到 ACK 的 ACK 之后，处于 ESTABLISHED 状态，因为它也一发一收了**。
 
@@ -859,7 +859,7 @@ B: 哦，你不想玩了啊，我知道了。
 
 ​	那怎么解决这些问题呢?TCP 协议专门设计了几个状态来处理这些问题。我们来看断开连接的时候的状态时序图。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/tcp-3.png)
+![](../img/tcp-3.png)
 
 ​	断开的时候，我们可以看到，当 A 说“不玩了”，就进入 FIN_WAIT_1 的状态，B 收到“A 不玩”的消 息后，发送知道了，就进入 CLOSE_WAIT 的状态。 
 
@@ -877,7 +877,7 @@ B: 哦，你不想玩了啊，我知道了。
 
 将连接建立和连接断开的两个时序状态图综合起来，就是这个著名的 TCP 的状态机。学习的时候比较建议将这个状态机和时序状态机对照着看，不然容易晕。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/tcp-4.png)
+![](../img/tcp-4.png)
 
 在这个图中，加黑加粗的部分，是上面说到的主要流程，其中阿拉伯数字的序号，是连接过程中的顺序，而大写中文数字的序号，是连接断开过程中的顺序。加粗的实线是客户端 A 的状态变迁，加粗的虚线是服务端 B 的状态变迁。
 
@@ -919,7 +919,7 @@ B: 哦，你不想玩了啊，我知道了。
 
 ​		于是，**发送端需要保持下面的数据结构**。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/tcp-5.png)
+![](../img/tcp-5.png)
 
 - **LastByteAcked**:第一部分和第二部分的分界线
 - **LastByteSent**:第二部分和第三部分的分界线
@@ -935,7 +935,7 @@ B: 哦，你不想玩了啊，我知道了。
 
 ​		对应的数据结构就像这样。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/tcp-6.png)
+![](../img/tcp-6.png)
 
 - **MaxRcvBuffer**:最大缓存的量;
 - **LastByteRead**之后是已经接收了，但是还没被应用层读取的; 
@@ -995,11 +995,11 @@ B: 哦，你不想玩了啊，我知道了。
 
 ​		我们先假设窗口不变的情况，窗口始终为 9。4 的确认来的时候，会右移一个，这个时候第 13 个包也可 以发送了。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/tcp2-1.png)
+![](../img/tcp2-1.png)
 
 ​		这个时候，假设发送端发送过猛，会将第三部分的 10、11、12、13 全部发送完毕，之后就停止发送了，未发送可发送部分为 0。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/tcp2-2.png)
+![](../img/tcp2-2.png)
 
 ​		当对于包 5 的确认到达的时候，在客户端相当于窗口再滑动了一格，这个时候，才可以有更多的包可以发送了，例如第 14 个包才可以发送。
 
@@ -1007,19 +1007,19 @@ B: 哦，你不想玩了啊，我知道了。
 
 ​		我们假设一个极端情况，接收端的应用一直不读取缓存中的数据，当数据包 6 确认后，窗口大小就不能再是 9 了，就要缩小一个变为 8。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/tcp2-3.png)
+![](../img/tcp2-3.png)
 
 这个新的窗口 8 通过 6 的确认消息到达发送端的时候，你会发现窗口没有平行右移，而是仅仅左面的边右移了，窗口的大小从 9 改成了 8。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/tcp2-4.png)
+![](../img/tcp2-4.png)
 
 如果接收端还是一直不处理数据，则随着确认的包越来越多，窗口越来越小，直到为 0。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/tcp2-6.png)
+![](../img/tcp2-6.png)
 
 ​		当这个窗口通过包 14 的确认到达发送端的时候，发送端的窗口也调整为 0，停止发送。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/tcp2-7.png)
+![](../img/tcp2-7.png)
 
 ​		如果这样的话，发送方会定时发送窗口探测数据包，看是否有机会调整窗口的大小。当接收方比较慢的时候，要防止低能窗口综合征，别空出一个字节来就赶快告诉发送方，然后马上又填满了，可以当窗口太小的时候，不更新窗口，直到达到一定大小，或者缓冲区一半为空，才更新窗口。这就是我们常说的流量控制。
 
@@ -1035,7 +1035,7 @@ B: 哦，你不想玩了啊，我知道了。
 
 ​	如果我们设置发送窗口，使得发送但未确认的包为为通道的容量，就能够撑满整个管道。	 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/tcp2-8.png)
+![](../img/tcp2-8.png)
 
 
 
@@ -1063,7 +1063,7 @@ B: 哦，你不想玩了啊，我知道了。
 
 ​		前面我们讲过快速重传算法。当接收端发现丢了一个中间包的时候，发送三次前一个包的 ACK，于是发送端就会快速的重传，不必等待超时再重传。TCP 认为这种情况不严重，因为大部分没丢，只丢了一小 部分，cwnd 减半为 cwnd/2，然后 sshthresh = cwnd，当三个包返回的时候，cwnd = sshthresh + 3，也就是没有一夜回到解放前，而是还在比较高的值，呈线性增长。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/tcp2-10.png)
+![](../img/tcp2-10.png)
 
 
 
@@ -1075,7 +1075,7 @@ B: 哦，你不想玩了啊，我知道了。
 
 ​		 为了优化这两个问题，后来有了**TCP BBR 拥塞算法**。它企图找到一个平衡点，就是通过不断的加快发送速度，将管道填满，但是不要填满中间设备的缓存，因为这样时延会增加，在这个平衡点可以很好的达到高带宽和低时延的平衡。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/tcp2-9.png)
+![](../img/tcp2-9.png)
 
 ### 十一、套接字Socket
 
@@ -1104,7 +1104,7 @@ B: 哦，你不想玩了啊，我知道了。
 
 ​		**连接建立成功之后，双方开始通过 read 和 write 函数来读写数据**，就像往一个文件流里面写东西一样。 这个图就是基于 TCP 协议的 Socket 程序函数调用过程。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/socket-1.png)
+![](../img/socket-1.png)
 
 ​		说 TCP 的 Socket 就是一个文件流，是非常准确的。因为，**Socket 在 Linux 中就是以文件的形式存在的**。除此之外，**还存在文件描述符**。**写入和读出，也是通过文件描述符**。
 
@@ -1114,7 +1114,7 @@ B: 哦，你不想玩了啊，我知道了。
 
 ​		**在这个结构里面，主要的是两个队列，一个是发送队列，一个是接收队列**。在这两个队列里面保存的是一个缓存 **sk_buff**。**这个缓存里面能够看到完整的包的结构**。看到这个，是不是能和前面讲过的收发包的场景联系起来了?
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/socket-2.png)
+![](../img/socket-2.png)
 
 #### 2. 基于 UDP 协议的 Socket 程序函数调用过程
 
@@ -1122,7 +1122,7 @@ B: 哦，你不想玩了啊，我知道了。
 
 ​		这个图的内容就是基于 UDP 协议的 Socket 程序函数调用过程。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/scoket-3.png)
+![](../img/scoket-3.png)
 
 
 
@@ -1154,7 +1154,7 @@ B: 哦，你不想玩了啊，我知道了。
 
 ​		**进程复制过程我画在这里。**
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/socket-4.png)
+![](../img/socket-4.png)
 
 ​		**因为复制了文件描述符列表，而文件描述符都是指向整个内核统一的打开文件列表的，因而父进程刚才因为 accept 创建的已连接 Socket 也是一个文件描述符，同样也会被子进程获得**。
 
@@ -1169,7 +1169,7 @@ B: 哦，你不想玩了啊，我知道了。
 
 ​		在 Linux 下，**通过 pthread_create 创建一个线程，也是调用 do_fork。不同的是，虽然新的线程在 task 列表会新创建一项，但是很多资源，例如文件描述符列表、进程空间，还是共享的，只不过多了一 个引用而已**。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/socket-5.png)
+![](../img/socket-5.png)
 
 ​		新的线程也可以通过已连接 Socket 处理请求，从而达到并发处理的目的。 
 
@@ -1193,7 +1193,7 @@ B: 哦，你不想玩了啊，我知道了。
 
 ​		**能完成这件事情的函数叫 epoll，它在内核中的实现不是通过轮询的方式，而是通过注册 callback 函数 的方式，当某个文件描述符发送变化的时候，就会主动通知**。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/socket-6.png)
+![](../img/socket-6.png)
 
 ​		如图所示，**假设进程打开了 Socket m, n, x 等多个文件描述符，现在需要通过 epoll 来监听是否这些 Socket 都有事件发生。**其中 `epoll_create` 创建一个 **epoll 对象，也是一个文件，也对应一个文件描述 符，同样也对应着打开文件列表中的一项。**在这项里面有一个红黑树，**在红黑树里，要保存这个 epoll 要监听的所有 Socket**。 
 
@@ -1225,7 +1225,7 @@ B: 哦，你不想玩了啊，我知道了。
 
 ​		请求的格式就像这样。 
 
-​	![](/Users/nali/songyintao/SongYintao.github.io/img/http-1.png)
+​	![](../img/http-1.png)
 
 ​		HTTP 的报文大概分为三大部分。第一部分是请求行，第二部分是请求的首部，第三部分才是请求的正 文实体。 
 
@@ -1264,7 +1264,7 @@ B: 哦，你不想玩了啊，我知道了。
 
 ​		这个架构的图就像这样。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/http-2.png) 
+![](../img/http-2.png) 
 
 ​		其中 DNS、CDN 我在后面的章节会讲。和这一节关系比较大的就是 Nginx 这一层，它如何处理 HTTP 协议呢?**对于静态资源，有 Vanish 缓存层。当缓存过期的时候，才会访问真正的 Tomcat 应用集群**。 
 
@@ -1296,7 +1296,7 @@ B: 哦，你不想玩了啊，我知道了。
 
 HTTP 的返回报文也是有一定格式的。这也是基于 HTTP 1.1 的。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/http-3.png)
+![](../img/http-3.png)
 
 ​		状态码会反应 HTTP 请求的结果。“200”意味着大吉大利;而我们最不想见的，就是“404”，也就 是“服务端无法响应这个请求”。然后，短语会大概说一下原因。 
 
@@ -1332,11 +1332,11 @@ HTTP 的返回报文也是有一定格式的。这也是基于 HTTP 1.1 的。
 
 ​		假设我们的一个页面要发送三个独立的请求，一个获取 css，一个获取 js，一个获取图片 jpg。**如果使用 HTTP 1.1 就是串行的，但是如果使用 HTTP 2.0，就可以在一个连接里，客户端和服务端都可以同时发送多个请求或回应，而且不用按照顺序一对一对应**。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/http-4.png)
+![](../img/http-4.png)
 
 HTTP 2.0 其实是将三个请求变成三个流，将数据分成帧，乱序发送到一个 TCP 连接中。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/http-5.png)
+![](../img/http-5.png)
 
 **HTTP 2.0 成功解决了 HTTP 1.1 的队首阻塞问题**，同时，也不需要通过 HTTP 1.x 的 pipeline 机制用多条 TCP 连接来实现并行请求与响应;减少了 TCP 连接数对服务器性能的影响，同时将页面的多个数据css、js、 jpg 等通过一个数据链接进行传输，能够加快页面组件的传输速度。
 
@@ -1368,7 +1368,7 @@ HTTP 2.0 其实是将三个请求变成三个流，将数据分成帧，乱序�
 
 ​		但是这里有一个问题，就是怎么知道包 100 和包 101 发送的是同样的内容呢?**QUIC 定义了一个 offset概念。QUIC 既然是面向连接的，也就像 TCP 一样，是一个数据流，发送的数据在这个数据流里面有个偏移量 offset，可以通过 offset 查看数据发送到了哪里，这样只要这个 offset 的包没有来，就要重发;如果来了，按照 offset 拼接，还是能够拼成一个流**。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/http-6.png)
+![](../img/http-6.png)
 
 #####机制三:无阻塞的多路复用
 
@@ -1384,7 +1384,7 @@ HTTP 2.0 其实是将三个请求变成三个流，将数据分成帧，乱序�
 
 ​		**QUIC 的 ACK 是基于 offset 的，每个 offset 的包来了，进了缓存，就可以应答，应答后就不会重发，中间的空挡会等待到来或者重发即可，而窗口的起始位置为当前收到的最大 offset，从这个 offset 到当前的 stream 所能容纳的最大缓存，是真正的窗口大小**。显然，这样更加准确。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/http-8.png)
+![](../img/http-8.png)
 
 #####总结一下:
 
@@ -1602,7 +1602,7 @@ Nonce 随机数保证唯一，或者 Timestamp 和 Nonce 合起来保证唯一�
 
 **任何一个 BitTorrent 启动之后，它都有两个角色。一个是peer，监听一个 TCP 端口，用来上传和下载 文件，这个角色表明，我这里有某个文件。另一个角色DHT node，监听一个 UDP 的端口，通过这个角 色，这个节点加入了一个 DHT 的网络**。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/p2p-1.png)
+![](../img/p2p-1.png)
 
 **在 DHT 网络里面，每一个 DHT node 都有一个 ID。这个 ID 是一个很长的串**。**每个 DHT node 都有责任掌握一些知识，也就是文件索引，也即它应该知道某些文件是保存在哪些节点上**。它只需要有这些知识就可以了，而它自己本身不一定就是保存这个文件的节点。
 
@@ -1715,7 +1715,7 @@ node new **只要在种子里面找到一个 DHT node，就加入了网络**。
 
 ​		于是，就有了这样树状的层次结构。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/dns-1.png)
+![](../img/dns-1.png)
 
 - **根 DNS 服务器** :返回顶级域 DNS 服务器的 IP 地址
 - **顶级域 DNS 服务器**:返回权威 DNS 服务器的 IP 地址
@@ -1738,7 +1738,7 @@ node new **只要在种子里面找到一个 DHT node，就加入了网络**。
 
 至此，我们完成了 DNS 的解析过程。现在总结一下，整个过程我画成了一个图。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/dns-2.png)
+![](../img/dns-2.png)
 
 #### 3.负载均衡 
 
@@ -1763,7 +1763,7 @@ node new **只要在种子里面找到一个 DHT node，就加入了网络**。
 
 **假设全国有多个数据中心，托管在多个运营商，每个数据中心三个可用区(Available Zone)。**对象存储通过跨可用区部署，实现高可用性。在**每个数据中心**中，都**至少部署两个内部负载均衡器**，**内部负载均衡器后面对接多个对象存储的前置服务器**(Proxy-server)。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/dns-3.png)
+![](../img/dns-3.png)
 
 1. 当一个客户端要访问 object.yourcompany.com 的时候，需要将域名转换为 IP 地址进行访问，所 以它要请求本地 DNS 解析器。 
 2. 本地 DNS 解析器先查看看本地的缓存是否有这个记录。如果有则直接使用，因为上面的过程太复杂 了，如果每次都要递归解析，就太麻烦了。 
@@ -1855,7 +1855,7 @@ DNS 的两项功能，**第一是根据名称查到具体的地址**，**另外�
 
 手机客户端自然知道手机在哪个运营商、哪个地址。**由于是直接的 HTTP 通信，HTTPDNS 服务器能够准确知道这些信息，因而可以做精准的全局负载均衡**。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/httpdns-1.png)
+![](../img/httpdns-1.png)
 
 ​		当然，当所有这些都不工作的时候，可以切换到传统的 LocalDNS 来解析，慢也比访问不到好。那 HTTPDNS 是如何解决上面的问题的呢? 
 
@@ -1886,17 +1886,17 @@ SDK 中的缓存会严格按照缓存过期时间，如果缓存没有命中，�
 
 **同步更新的方式对应到应用架构中缓存的Cache-Aside 机制，也即先读缓存，不命中读数据库，同时将 结果写入缓存**。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/httpdns-2.png)
+![](../img/httpdns-2.png)
 
 **异步更新的优点**是，可以将多个请求都发现过期的情况，**合并为一个对于 HTTPDNS 的请求任务，只执行一次，减少 HTTPDNS 的压力**。同时可以在即将过期的时候，就创建一个任务进行预加载，防止过期 之后再刷新，称为**预加载**。 
 
 **它的缺点**是当前请求拿到过期数据的时候，如果客户端允许使用过期数据，需要冒一次风险。如果过期的数据还能请求，就没问题;如果不能请求，则失败一次，等下次缓存更新后，再请求方能成功。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/httpdns-3.png)
+![](../img/httpdns-3.png)
 
 **异步更新的机制**对应到应用架构中缓存的**Refresh-Ahead** 机制，即业务仅仅访问缓存，当过期的时候定期刷新。在著名的**应用缓存 Guava Cache** 中，有个 **RefreshAfterWrite** 机制，对于并发情况下，多个缓存访问不命中从而引发并发回源的情况，可以采取只有一个请求回源的模式。**在应用架构的缓存中，也常常用数据预热或者预加载的机制**。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/httpdns-4.png)
+![](../img/httpdns-4.png)
 
 ####  2. HTTPDNS 的调度设计
  由于客户端嵌入了 SDK，因而就不会因为本地 DNS 的各种缓存、转发、NAT，让权威 DNS 服务器误会客户端所在的位置和运营商，而可以拿到第一手资料。
@@ -1911,7 +1911,7 @@ SDK 中的缓存会严格按照缓存过期时间，如果缓存没有命中，�
 
 HTTPDNS 通过智能调度之后返回的结果，也会缓存在客户端。为了不让缓存使得调度失真，客户端可 以根据不同的移动网络运营商 WIFI 的 SSID 来分维度缓存。不同的运营商或者 WIFI 解析出来的结果会不同。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/httpdns-7.png)
+![](../img/httpdns-7.png)
 
 ### 十八、CDN
 
@@ -1928,7 +1928,7 @@ HTTPDNS 通过智能调度之后返回的结果，也会缓存在客户端。为
 当然是可以的。这些分布在各个地方的各个数据中心的节点，就称为边缘节点。
 		**由于边缘节点数目比较多，但是每个集群规模比较小，不可能缓存下来所有东西，因而可能无法命中，这样就会在边缘节点之上**。有区域节点，规模就要更大，缓存的数据会更多，命中的概率也就更大。在区域节点之上是中心节点，规模更大，缓存数据更多。如果还不命中，就只好回源网站访问了。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/cdn-1.png)
+![](../img/cdn-1.png)
 
 ​		这就是CDN 的分发系统的架构。CDN 系统的缓存，也是一层一层的，能不访问后端真正的源，就不打扰它。这也是电商网站物流系统的思路，北京局找不到，找华北局，华北局找不到，再找北方局。 
 
@@ -1936,7 +1936,7 @@ HTTPDNS 通过智能调度之后返回的结果，也会缓存在客户端。为
 
 ​		还记得我们讲过的基于 DNS 的全局负载均衡吗?这个负载均衡主要用来选择一个就近的同样运营商的服务器进行访问。你会发现，**CDN 分发网络也是一个分布在多个区域、多个运营商的分布式系统，也可以用相同的思路选择最合适的边缘节点**。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/cdn-2.png)
+![](../img/cdn-2.png)
 
 ​		**在没有 CDN 的情况下**，用户向浏览器输入 www.web.com 这个域名，客户端访问本地 DNS 服务器的时候，如果本地 DNS 服务器有缓存，则返回网站的地址;如果没有，递归查询到网站的权威 DNS 服务器，这个权威 DNS 服务器是负责 web.com 的，它会返回网站的 IP 地址。本地 DNS 服务器缓存下 IP 地址，将 IP 地址返回，然后客户端直接访问这个 IP 地址，就访问到了这个网站。 
 
@@ -1963,7 +1963,7 @@ CDN 可以进行缓存的内容有很多种。
 
 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/cdn-3.png)
+![](../img/cdn-3.png)
 
 还记得这个接入层缓存的架构吗?在进入数据中心的时候，我们希望通过最外层接入层的缓存，将大部 分静态资源的访问拦在边缘。而 **CDN 则更进一步，将这些静态资源缓存到离用户更近的数据中心外。 越接近客户，访问性能越好，时延越低。** 
 
@@ -2018,7 +2018,7 @@ CDN 可以进行缓存的内容有很多种。
 
 ​		**这些交换机往往是放在机架顶端的**，所以经常称为**TOR**(**Top Of Rack**)**交换机**。这一层的交换机常常称为**接入层**(**Access Layer**)。注意这个接入层和原来讲过的应用的接入层不是一个概念。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/data-1.png)
+![](../img/data-1.png)
 
 当一个机架放不下的时候，就需要多个机架，还需要有交换机将多个机架连接在一起。这些交换机对性能的要求更高，带宽也更大。这些交换机称为**汇聚层交换机**(**Aggregation Layer**)。 
 
@@ -2026,35 +2026,35 @@ CDN 可以进行缓存的内容有很多种。
 
 ​		这就需要服务器和交换机都支持一种协议**LACP**(**Link Aggregation Control Protocol**)。它们互相通信，将多个网卡聚合称为一个网卡，多个网线聚合成一个网线，在网线之间可以进行负载均衡，也可以为了高可用作准备。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/data-3.png)
+![](../img/data-3.png)
 
 ​		网卡有了高可用保证，但交换机还有问题。如果一个机架只有一个交换机，它挂了，那整个机架都不能上网了。因而TOR交换机也需要高可用，同理接入层和汇聚层的连接也需要高可用性，也不 能单线连着。 
 
 ​		最传统的方法是，部署两个接入交换机、两个汇聚交换机。服务器和两个接入交换机都连接，接入交换机和两个汇聚都连接，当然这样会形成环，所以需要启用STP协议，去除环，但是这样两个汇聚就只能一主一备了。STP协议里我们学过，只有一条路会起作用。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/data-4.png)
+![](../img/data-4.png)
 
 ​		交换机有一种技术叫作**堆叠**，所以另一种方法是，将多个交换机形成一个逻辑的交换机，服务器通过多根线分配连到多个接入层交换机上，而接入层交换机多根线分别连接到多个交换机上，并且通过堆叠的私有协议，形成**双活**的连接方式。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/data-5.png)
+![](../img/data-5.png)
 
 ​		由于对带宽要钱求更大，而且挂了影响也更大，所以两个堆叠可能就不够了，可以就会有更多的，比如四个堆叠为一个逻辑的交换机。 汇聚层将大量的计算节点相互连接在一起，形成一个集群。在这个集群里面，服务器之间通过二层互通，这个区域常称为一个**POD**(**Point Of Delivery**)，有时候也称为一个**可用区** 
 
 (**Available Zon**e)。 当节点数目再多的时候，一个可用区放不下，需要将多个可用区连在一起，连接多个可用区的交换机称为**核心交换机**。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/data-7.png)
+![](../img/data-7.png)
 
 ​		核心交换机吞吐量更大，高可用要求更高，肯定需要堆叠，但是往往仅仅堆叠，不足以满足吞吐量，因而还是需要部署多组核心交换机。核心和汇聚交换机之间为了高可用，也是全互连模式的。
 ​		**这个时候还存在那个问题，出现环路怎么办?**
 ​		一种方式是，**不同的可用区在不同的二层网络，需要分配不同的网段**。**汇聚和核心之间通过三层网络互通的，二层都不在一个广播域里面，不会存在二层环路的问题**。**三层有环是没有问题的，只要通过路由协议选择最佳的路径就可以了**。**那为啥二层不能有环路，而三层可以呢**?你可以回忆一下二层环路的情况。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/data-8.png)
+![](../img/data-8.png)
 
 ​		如图，核心层和汇聚层之间通过内部的路由协议OSPF，找到最佳的路径进行访问，而且还可以通过ECMP等价路由，在多个路径之间进行负载均衡和高可用。 
 
 ​		但是随着数据中心里面的机器越来越多，尤其是**有了云计算、大数据，集群规模非常大，而且都要求在一个二层网络里面**。这就需要二层互连从**汇聚层**上升为**核心层**，**也即在核心以下，全部是 二层互连，全部在一个广播域里面，这就是常说的大二层。** 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/data-10.png)
+![](../img/data-10.png)
 
 ​		如果大二层横向流量不大，核心交换机数目不多，可以做堆叠，但是如果横向流量很大，仅仅堆叠满足不了，就需要部署多组核心交换机，而且要和汇聚层进行全互连。**由于堆叠只解决一个核心交换机组内的无环问题，而组之间全互连，还需要其他机制进行解**决。
 
@@ -2066,7 +2066,7 @@ CDN 可以进行缓存的内容有很多种。
 
 ​		Rbridage之间通过**链路状态协议**运作。记得这个路由协议吗?通过它可以学习整个大二层的拓扑，知道访问哪个MAC应该从哪个网桥走;还可以计算最短的路径，也可以通过等价的路由进行 负载均衡和高可用性。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/data-11.png)
+![](../img/data-11.png)
 
 ​		TRILL协议在原来的MAC头外面加上自己的头，以及外层的MAC头。TRILL头里面的Ingress RBridge，有点像IP头里面的源IP地址，Egress RBridge是目标IP地址，这两个地址是端到端的，在中 间路由的时候，不会发生改变。而外层的MAC，可以有下一跳的Bridge，就像路由的下一跳，也是通过MAC地址来呈现的一样。 
 
@@ -2084,7 +2084,7 @@ CDN 可以进行缓存的内容有很多种。
 
 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/data-12.png)
+![](../img/data-12.png)
 
 ​		核心交换机之外，就是边界路由器了。至此从服务器到数据中心边界的层次情况已经清楚了。 在核心交换上面，往往会挂一些安全设备，例如入侵检测、DDoS防护等等。这是整个数据中心的屏障，防止来自外来的攻击。核心交换机上往往还有负载均衡器，原理前面的章节已经说过了。 
 
@@ -2092,7 +2092,7 @@ CDN 可以进行缓存的内容有很多种。
 
 ​		于是整个数据中心的网络如下图所示。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/data-14.png)
+![](../img/data-14.png)
 
 这是一个典型的三层网络结构。这里的三层不是指IP层，而是指接入层、汇聚层、核心层三层。这种模式非常有利于外部流量请求到内部应用。这个类型的流量，是从外到内或者从内到外，对应 到上面那张图里，就是从上到下，从下到上，上北下南，所以称为**南北流量**。 
 
@@ -2104,7 +2104,7 @@ CDN 可以进行缓存的内容有很多种。
 
 - **脊交换机**(**spine switch**)，相当于核心交换机。**叶脊之间通过ECMP动态选择多条路径**。脊交换机现在只是为叶子交换机提供一个弹性的L3路由网络。南北流量可以不用直接从脊交换机 发出，而是通过与leaf交换机并行的交换机，再接到边界路由器出去。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/data-9.png)
+![](../img/data-9.png)
 
 传统的三层网络架构是垂直的结构，而叶脊网络架构是扁平的结构，更易于水平扩展。
 
@@ -2120,7 +2120,7 @@ CDN 可以进行缓存的内容有很多种。
 
 
 
-​	![](/Users/nali/songyintao/SongYintao.github.io/img/vpn-1.png)
+​	![](../img/vpn-1.png)
 
 **VPN**，全名**Virtual Private Network**，**虚拟专用网**，就是利用开放的公众网络，建立专用数据传输通道，将远程的分支机构、移动办公人员等连接起来。    
 
@@ -2128,7 +2128,7 @@ CDN 可以进行缓存的内容有很多种。
 
 ​		VPN**通过隧道技术在公众网络上仿真一条点到点的专线，是通过利用一种协议来传输另外一种协议的技术**，这里面涉及三种协议:**乘客协议**、**隧道协议**和**承载协议**。 我们以**IPsec协议**为例来说明。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/vpn-2.png)
+![](../img/vpn-2.png)
 
 ​		你知道如何通过自驾进行海南游吗?这其中，你的车怎么通过琼州海峡呢?这里用到轮渡，其实这就用到**隧道协议**。 在广州这边开车是有“协议”的，例如靠右行驶、红灯停、绿灯行，这个就相当于“被封装”的**乘客协议**。当然在海南那面，开车也是同样的协议。这就相当于需要连接在一起的一个公司的两个分部。 
 
@@ -2155,7 +2155,7 @@ CDN 可以进行缓存的内容有很多种。
 
 基于以上三个特性，组成了**IPsec VPN的协议簇**。这个协议簇内容比较丰富。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/vpn-3.png)
+![](../img/vpn-3.png)
 
 ​		在这个协议簇里面，有两种协议，这两种协议的区别在于封装网络包的格式不一样。
 
@@ -2175,7 +2175,7 @@ CDN 可以进行缓存的内容有很多种。
 
 到此**客户端和服务端可以根据已有的信息，各自独立算出相同的结果K**，就是**对称密钥**。但是这个过程，对称密钥从来没有在通道上传输过，只传输了生成密钥的材料，通过这些材料，截获的人是无法算出的。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/vpn-4.png)
+![](../img/vpn-4.png)
 
 ​		有了这个对称密钥K，接下来是**第二个阶段，建立IPsec SA**。在这个SA里面，双方会生成一个随机的对称密钥M，由K加密传给对方，然后使用M进行双方接下来通信的数据。对称密钥M是有过期时间的，会过一段时间，重新生成一次，从而防止被破解。
 
@@ -2187,23 +2187,23 @@ IPsec SA里面有以下内容:
 
 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/vpn-5.png)
+![](../img/vpn-5.png)
 
 当IPsec建立好，接下来就可以开始打包封装传输了。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/vpn-7.png)
+![](../img/vpn-7.png)
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/vpn-8.png)
+![](../img/vpn-8.png)
 
 ​		左面是原始的IP包，在IP头里面，会指定上一层的协议为TCP。ESP要对IP包进行封装，因而IP头里面的上一层协议为ESP。在ESP的正文里面，ESP的头部有双方商讨好的SPI，以及这次传输的序 列号。 
 
 ​		接下来全部是加密的内容。可以通过对称密钥进行解密，解密后在正文的最后，指明了里面的协议是什么。如果是IP，则需要先解析IP头，然后解析TCP头，这是从隧道出来后解封装的过程。 有了IPsec VPN之后，客户端发送的明文的IP包，都会被加上ESP头和IP头，在公网上传输，由于加密，可以保证不被窃取，到了对端后，去掉ESP的头，进行解密。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/vpn-9.png)
+![](../img/vpn-9.png)
 
 这种**点对点的基于IP的VPN，能满足互通的要求，但是速度往往比较慢，这是由底层IP协议的特性决定的**。IP不是面向连接的，是尽力而为的协议，**每个IP包自由选择路径，到每一个路由器，都自己去找下一跳，丢了就丢了，是靠上一层TCP的重发来保证可靠性**。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/vpn-10.png)
+![](../img/vpn-10.png)
 
 ​		**因为IP网络从设计的时候，就认为是不可靠的，所以即使同一个连接，也可能选择不同的道路，这样的好处是，一条道路崩溃的时候，总有其他的路可以走。当然，带来的代价就是，不断的路由查找，效率比较差。** 
 
@@ -2211,7 +2211,7 @@ IPsec SA里面有以下内容:
 
 ​		另外，TCP所谓的面向连接，是不停地重试来保证成功，其实下层的IP还是不面向连接的，丢了就丢了。**ATM是传输之前先建立一个连接，形成一个虚拟的通路，一旦连接建立了，所有的包都按照相同的路径走，不会分头行事**。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/vpn-12.png)
+![](../img/vpn-12.png)
 
 ​		好处是不需要每次都查路由表的，虚拟路径已经建立，打上了标签，后续的包傻傻的跟着走就是了，不用像IP包一样，每个包都思考下一步怎么走，都按相同的路径走，这样效率会高很多。 
 
@@ -2221,7 +2221,7 @@ IPsec SA里面有以下内容:
 
 ​		有没有一种方式将两者的优点结合起来呢?这就是**多协议标签交换**(**MPLS**，**Multi-Protocol Label Switching**)。MPLS的格式如图所示，在原始的IP头之外，多了MPLS的头，里面可以打标签。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/vpn-13.png)
+![](../img/vpn-13.png)
 
 ​		在二层头里面，有类型字段，0x0800表示IP，0x8847表示MPLS Label。 
 
@@ -2229,7 +2229,7 @@ IPsec SA里面有以下内容:
 
 ​		有了标签，还需要设备认这个标签，并且能够根据这个标签转发，这种能够转发标签的路由器称为**标签交换路由器**(LSR，Label Switching Router)。 这种路由器会有两个表格，一个就是传统的FIB，也即路由表，另一个就是LFIB，标签转发表。有了这两个表，既可以进行普通的路由转发，也可以进行基于标签的转发。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/vpn-14.png)
+![](../img/vpn-14.png)
 
 ​		有了标签转发表，转发的过程如图所示，就不用每次都进行普通路由的查找了。 这里我们区分MPLS区域和非MPLS区域。在MPLS区域中间，使用标签进行转发，非MPLS区域，使用普通路由转发，在边缘节点上，需要有能力将对于普通路由的转发，变成对于标签的转发。 
 
@@ -2241,7 +2241,7 @@ IPsec SA里面有以下内容:
 
 ​		其实LDP与IP帮派中的路由协议十分相像，通过LSR的交互，互相告知去哪里应该打哪个标签，称为标签分发，往往是从下游开始的。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/vpn-15.png)
+![](../img/vpn-15.png)
 
 ​		如果有一个边缘节点发现自己的路由表中出现了新的目的地址，它就要给别人说，我能到达一条新的路径了。
 ​		如果此边缘节点存在上游LSR，并且尚有可供分配的标签，则该节点为新的路径分配标签，并向上游发出标签映射消息，其中包含分配的标签等信息。
@@ -2249,7 +2249,7 @@ IPsec SA里面有以下内容:
 ​		当入口LSR收到标签映射消息时，在标签转发表中增加相应的条目。这时，就完成了LSP的建立。有了标签，转发轻松多了，但是这个和VPN什么关系呢?
 ​		可以想象，如果我们VPN通道里面包的转发，都是通过标签的方式进行，效率就会高很多。所以要想个办法把MPLS应用于VPN。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/vpn-16.png)
+![](../img/vpn-16.png)
 
 **在MPLS VPN中，网络中的路由器分成以下几类:**
 
@@ -2282,7 +2282,7 @@ IPsec SA里面有以下内容:
 
 - 第二层(内层)标签在从对端PE到达CE时使用，在PE上，通过查找VRF表项，指示报文应被送到哪个VPN用户，或者更具体一些，到达哪一个CE。这样，对端PE根据内层标签可以找到转发 报文的接口。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/vpn-21.png)
+![](../img/vpn-21.png)
 
 我们来举一个例子，看MPLS VPN的包发送过程。
 
@@ -2324,7 +2324,7 @@ IPsec SA里面有以下内容:
 
 那网络是如何“骗”应用的呢?如何将虚拟机的网络和物理机的网络连接起来?
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/cloud-1.png)
+![](../img/cloud-1.png)
 
 ​		首先，虚拟机要有一张网卡。对于qemu-kvm来说，这是通过Linux上的一种TUN/TAP技术来实现的。 
 
@@ -2359,11 +2359,11 @@ IPsec SA里面有以下内容:
 
 ​		**在物理机上，应该有一个虚拟的交换机，在Linux上有一个命令叫作brctl，可以创建虚拟的网桥brctl addbr br0。**创建出来以后，**将两个虚拟机的虚拟网卡，都连接到虚拟网桥brctl addif br0 tap0上**，这样将两个虚拟机**配置相同的子网网段**，**两台虚拟机就能够相互通信了**。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/cloud-2.png)
+![](../img/cloud-2.png)
 
  那这些虚拟机如何连外网呢?在桌面虚拟化软件上面，我们能看到以下选项。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/cloud-4.png)
+![](../img/cloud-4.png)
 
 ​		这里面，host-only的网络对应的，其实就是上面两个虚拟机连到一个br0虚拟网桥上，而且不考虑访问外部的场景，只要虚拟机之间能够相互访问就可以了。
 
@@ -2371,21 +2371,21 @@ IPsec SA里面有以下内容:
 
 - ​		一种方式称为**桥接**。如果在桌面虚拟化软件上选择桥接网络，则在你的笔记本电脑上，就会形成下面的结构。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/cloud-3.png)
+![](../img/cloud-3.png)
 
 ​		每个虚拟机都会有虚拟网卡，在你的笔记本电脑上，会发现多了几个网卡，其实是虚拟交换机。这个虚拟交换机将虚拟机连接在一起。在桥接模式下，物理网卡也连接到这个虚拟交换机上，物理网卡在桌面虚拟化软件上，在“界面名称”那里选定。
 
 ​		如果使用桥接网络，当你登录虚拟机里看IP地址的时候会发现，你的虚拟机的地址和你的笔记本电脑的，以及你旁边的同事的电脑的网段是一个网段。这是为什么呢?这其实相当于将物理机和虚 拟机放在同一个网桥上，相当于这个网桥上有三台机器，是一个网段的，全部打平了。我将图画成下面的样子你就好理解了。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/cloud-5.png)
+![](../img/cloud-5.png)
 
 ​		**在数据中心里面，采取的也是类似的技术，只不过都是Linux，在每台机器上都创建网桥br0，虚拟机的网卡都连到br0上，物理网卡也连到br0上，所有的br0都通过物理网卡出来连接到物理交换机上。**
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/cloud-6.png)
+![](../img/cloud-6.png)
 
 同样我们换一个角度看待这个拓扑图。同样是将网络打平，虚拟机会和你的物理网络具有相同的网段。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/cloud-7.png)
+![](../img/cloud-7.png)
 
 ​		在这种方式下，不但解决了同一台机器的互通问题，也解决了跨物理机的互通问题，因为都在一个二层网络里面，彼此用相同的网段访问就可以了。但是当规模很大的时候，会存在问题。
 
@@ -2395,7 +2395,7 @@ IPsec SA里面有以下内容:
 
 - 另外一种方式称为**NAT**。如果在桌面虚拟化软件中使用NAT模式，在你的笔记本电脑上会出现如下的网络结构。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/cloud-8.png)
+![](../img/cloud-8.png)
 
 ​		在这种方式下，你登录到虚拟机里面查看IP地址，会发现虚拟机的网络是虚拟机的，物理机的网络是物理机的，两个不相同。虚拟机要想访问物理机的时候，需要将地址NAT成为物理机的地址。 
 
@@ -2403,7 +2403,7 @@ IPsec SA里面有以下内容:
 
 ​		在数据中心里面，也是使用类似的方式。这种方式更像是真的将你宿舍里面的情况，搬到一台物理机上来。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/cloud-9.png)
+![](../img/cloud-9.png)
 
 ​		虚拟机是你的电脑，路由器和DHCP Server相当于家用路由器或者寝室长的电脑，物理网卡相当于你们宿舍的外网网口，用于访问互联网。所有电脑都通过内网网口连接到一个网桥br0上，虚拟机要想访问互联网，需要通过br0连到路由器上，然后通过路由器将请求NAT成为物理网络的地址，转发到物理网络。 
 
@@ -2416,9 +2416,9 @@ IPsec SA里面有以下内容:
 ​		但是**如何跨物理机互通，并且实现VLAN的隔离呢?**由于**brctl创建的网桥上面的tag是没办法在网桥之外的范围内起作用的，于是我们需要寻找其他的方式。**
 ​		有一个命令**vconfig**，可以基于物理网卡eth0创建带VLAN的虚拟网卡，所有从这个虚拟网卡出去的包，都带这个VLAN，如果这样，跨物理机的互通和隔离就可以通过这个网卡来实现。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/cloud-11.png)
+![](../img/cloud-11.png)
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/cloud-10.png)
+![](../img/cloud-10.png)
 
 ​		先为每个用户分配不同的VLAN，例如有一个用户VLAN 10，一个用户VLAN 20。在一台物理机上，**基于物理网卡，为每个用户用vconfig创建一个带VLAN的网卡。不同的用户使用不同的虚拟网桥，带VLAN的虚拟网卡也连接到虚拟网桥上**。
 
@@ -2451,7 +2451,7 @@ IPsec SA里面有以下内容:
 
 -  **逻辑上的集中控制** :逻辑上集中的控制平面可以控制多个转发面设备，也就是控制整个物理网络，因而可以获得全局的网络状态视图，并根据该全局网络状态视图实现对网络的优化控制， 就像物业管理员在监控室能够看到整个小区的情况，并根据情况优化出入方案。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/sdn-1.png)
+![](../img/sdn-1.png)
 
 #### **2. OpenFlow和OpenvSwitch**
 
@@ -2459,22 +2459,22 @@ IPsec SA里面有以下内容:
 
 ​		**OpenFlow**是**SDN控制器和网络设备**之间互通的**南向接口协议**，**OpenvSwitch**用于创建软件的虚拟交换机。**OpenvSwitch是支持OpenFlow协议的**，**当然也有一些硬件交换机也支持OpenFlow 协议**。它们都可以被统一的**SDN控制器管理**，从而实现物理机和虚拟机的网络连通。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/sdn-2.png)
+![](../img/sdn-2.png)
 
 SDN控制器是如何通过OpenFlow协议控制网络的呢?
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/sdn-3.png)
+![](../img/sdn-3.png)
 
 ​		在OpenvSwitch里面，有一个流表规则，任何通过这个交换机的包，都会经过这些规则进行处理，从而接收、转发、放弃。
 ​		那流表长啥样呢?其实就是一个个表格，每个表格好多行，每行都是一条规则。每条规则都有优先级，先看高优先级的规则，再看低优先级的规则。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/sdn-4.png)
+![](../img/sdn-4.png)
 
 ​		**对于每一条规则，要看是否满足匹配条件。这些条件包括，从哪个端口进来的，网络包头里面有什么等等。满足了条件的网络包，就要执行一个动作，对这个网络包进行处理。可以修改包头里的内容，可以跳到任何一个表格，可以转发到某个网口出去，也可以丢弃**。
 
 通过这些表格，可以对收到的网络包随意处理。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/sdn-5.png)
+![](../img/sdn-5.png)
 
 ​		具体都能做什么处理呢?通过上面的表格可以看出，简直是想怎么处理怎么处理，可以覆盖TCP/IP协议栈的四层。
 
@@ -2548,7 +2548,7 @@ ovs-vsctl set Port third_br trunks=101,102
  ovs-vsctl set bridge ubuntu br flood-vlans=101,102,103
 ```
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/sdn-6.png)
+![](../img/sdn-6.png)
 
 创建好了环境以后，我们来做这个实验。
 
@@ -2572,7 +2572,7 @@ ovs-vsctl set Port third_br trunks=101,102
 
 我们搭建一个测试环境。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/sdn-7.png)
+![](../img/sdn-7.png)
 
 我们使用下面的命令，建立bond连接。
 
@@ -2598,7 +2598,7 @@ ovs-vsctl set Port bond1 bond mode=balance-slb
 ​		通过这个例子，我们可以看到，通过OpenvSwitch，你不用买两台支持bond的交换机，也能看到bond的效果。
 ​		**那OpenvSwitch是怎么做到这些的呢?我们来看OpenvSwitch的架构图**。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/sdn-8.png)
+![](../img/sdn-8.png)
 
 ​		OpenvSwitch包含很多的模块，在用户态有两个重要的进程，也有两个重要的命令行工具。 
 
@@ -2620,7 +2620,7 @@ ovs-vsctl set Port bond1 bond mode=balance-slb
 
 ​		当在用户态匹配到了流表规则之后，就在用户态执行操作，同时**将这个匹配成功的流表通过reinject下发到内核，从而接下来的包都能在内核找到这个规则**。 这里调用openflow协议的，是本地的命令行工具，也可以是远程的SDN控制器，一个重要的SDN控制器是**OpenDaylight**。 下面这个图就是OpenDaylight中看到的拓扑图。是不是有种物业管理员在监控室里的感觉? 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/sdn-9.png)
+![](../img/sdn-9.png)
 
 我们可以通过在OpenDaylight里，将两个交换机之间配置通，也可以配置不通，还可以配置一个虚拟IP地址VIP，在不同的机器之间实现负载均衡等等，所有的策略都可以灵活配置。
 
@@ -2628,7 +2628,7 @@ ovs-vsctl set Port bond1 bond mode=balance-slb
 
 ####  如何在云计算中使用OpenSwitch？
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/sdn-11.png)
+![](../img/sdn-11.png)
 
 **我们还是讨论VLAN的场景。** 
 
@@ -2673,7 +2673,7 @@ ovs-vsctl set Port bond1 bond mode=balance-slb
 
 整个过程如图所示。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/sec-1.png)
+![](../img/sec-1.png)
 
 ​        整个包的处理过程还是原来的过程，只不过为什么要格外关注这**五个节点**呢? 
 
@@ -2685,7 +2685,7 @@ ovs-vsctl set Port bond1 bond mode=balance-slb
 
 ​		在用户态，还有一个你肯定知道的客户端程序**iptables**，用命令行来干预内核的规则。内核的功能对应`iptables`的命令行来讲，就是**表和链**的概念。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/sec-2.png)
+![](../img/sec-2.png)
 
 ####  **iptables的表分为四种**:
 
@@ -2715,7 +2715,7 @@ ovs-vsctl set Port bond1 bond mode=balance-slb
 
  将iptables的表和链加入到上面的过程图中，就形成了下面的图和过程。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/sec-3.png)
+![](../img/sec-3.png)
 
 1. 数据包进入的时候，先进mangle表的PREROUTING链。在这里可以根据需要，改变数据包头内容之后，进入nat表的PREROUTING链，在这里可以根据需要做Dnat，也就是目标地址转 换。 
 2. 进入路由判断，要判断是进入本地的还是转发的。 
@@ -2748,7 +2748,7 @@ iptables -A   NPUT -s 0.0.0.0/0.0.0.0 -d X.X.X.X -p tcp --dport 80 -   CCEPT
 
 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/sec-4.png)
+![](../img/sec-4.png)
 
 ​		例如图中，我们会创建一系列的网站，都是前端在Tomcat里面，对外开放8080端口。数据库使用MySQL，开放3306端口。 
 
@@ -2758,7 +2758,7 @@ iptables -A   NPUT -s 0.0.0.0/0.0.0.0 -d X.X.X.X -p tcp --dport 80 -   CCEPT
 
 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/sec-5.png)
+![](../img/sec-5.png)
 
 ​		两个VM都通过tap网卡连接到一个网桥上，但是网桥是二层的，两个VM之间是可以随意互通的，因而需要有一个地方统一配置这些iptables规则。 
 
@@ -2776,7 +2776,7 @@ iptables -A   NPUT -s 0.0.0.0/0.0.0.0 -d X.X.X.X -p tcp --dport 80 -   CCEPT
 
 ​		**云平台里面的虚拟机也是这样子的，它只有私网IP地址，到达外网网口要做一次Snat，转换成为机房网IP，然后出数据中心的时候，再转换为公网IP**。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/sec-10.png)
+![](../img/sec-10.png)
 
 ​		这里有一个问题是，在外网网口上做Snat的时候，是全部转换成一个机房网IP呢，还是每个虚拟机都对应一个机房网IP，最终对应一个公网IP呢?前面也说过了，公网IP非常贵，虚拟机也很多， 当然不能每个都有单独的机房网和公网IP了，于是这种Snat是一种特殊的Snat，MASQUERADE(地址伪装)。 
 
@@ -2806,7 +2806,7 @@ iptables -A   NPUT -s 0.0.0.0/0.0.0.0 -d X.X.X.X -p tcp --dport 80 -   CCEPT
 ​		在云平台上，也有这种现象，好在有一种**流量控制的技术**，可以实现**QoS**(Quality of Service)，从而保障大多数用户的服务质量。
 **对于控制一台机器的网络的QoS，分两个方向，一个是入方向，一个是出方向**。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/qos-1.png)
+![](../img/qos-1.png)
 
 ​		其实**我们能控制的只有出方向，通过Shaping，将出的流量控制成自己想要的模样**。而**进入的方向是无法控制的，只能通过Policy将包丢弃**。 
 
@@ -2818,7 +2818,7 @@ iptables -A   NPUT -s 0.0.0.0/0.0.0.0 -d X.X.X.X -p tcp --dport 80 -   CCEPT
 
 ​		第一大类称为**无类别排队规则**(Classless Queuing Disciplines)。还记得我们讲ip addr的时候讲过的**pfifo_fast**，这是一种不把网络包分类的技术。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/qos-2.png)
+![](../img/qos-2.png)
 
 `pfifo_fast`分为三个先入先出的队列，称为三个Band。**根据网络包里面TOS，看这个包到底应该进入哪个队列**。`TOS`总共四位，每一位表示的意思不同，总共十六种类型。 
 
@@ -2828,7 +2828,7 @@ iptables -A   NPUT -s 0.0.0.0/0.0.0.0 -d X.X.X.X -p tcp --dport 80 -   CCEPT
 
 ​		另外一种无类别队列规则叫作**随机公平队列**(Stochastic Fair Queuing)。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/qos-3.png)
+![](../img/qos-3.png)
 
 ​		会**建立很多的FIFO的队列**，**TCP Session会计算hash值，通过hash值分配到某个队列**。在队列的**另一端，网络包会通过轮询策略从各个队列中取出发送**。这样不会有一个Session占据所有的流量。 
 
@@ -2838,7 +2838,7 @@ iptables -A   NPUT -s 0.0.0.0/0.0.0.0 -d X.X.X.X -p tcp --dport 80 -   CCEPT
 
 ​		还有一种无类别队列规则称为**令牌桶规则**(TBF，Token Bucket Filte)。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/qos-4.png)
+![](../img/qos-4.png)
 
 
 
@@ -2854,7 +2854,7 @@ iptables -A   NPUT -s 0.0.0.0/0.0.0.0 -d X.X.X.X -p tcp --dport 80 -   CCEPT
 
 HTB往往是一棵树，接下来我举个具体的例子，通过TC如何构建一棵HTB树来带你理解。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/qos-5.png)
+![](../img/qos-5.png)
 
 使用TC可以为某个网卡eth0创建一个HTB的队列规则，需要付给它一个句柄为(1:)。
 
@@ -2916,11 +2916,11 @@ ovs-vsctl set Interface tap0 ingress policing_burst=10000
 
 我们构建一个拓扑图，来看看OpenvSwitch的QoS是如何工作的。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/qos-7.png)
+![](../img/qos-7.png)
 
 首先，在port上可以创建QoS规则，一个QoS规则可以有多个队列Queue。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/qos-6.png)
+![](../img/qos-6.png)
 
 ```shell
  ovs-vsctl set port first_br qos=@newqos 
@@ -2964,13 +2964,13 @@ ovs-ofctl add-flow br0 "in_port=8 nw_src=192.168.100.102 actions=enqueue:5:2"
 
 ​		第一个技术是**GRE**，全称Generic Routing Encapsulation，**它是一种IP-over-IP的隧道技术**。它将IP包封装在GRE包里，**外面加上IP头，在隧道的一端封装数据包，并在通路上进行传输，到另外一端的时候解封装。你可以认为Tunnel是一个虚拟的、点对点的连接**。 
 
-​		![](/Users/nali/songyintao/SongYintao.github.io/img/gre-1.png)
+​		![](../img/gre-1.png)
 
 ​		从这个图中可以看到，在GRE头中，前32位是一定会有的，后面的都是可选的。在前4位标识位里面，有标识后面到底有没有可选项?**这里面有个很重要的key字段，是一个32位的字段，里面存放的往往就是用于区分用户的Tunnel ID**。**32位，够任何云平台喝一壶的了**! 
 
 ​		**下面的格式类型专门用于网络虚拟化的GRE包头格式**，称为**NVGRE**，也给网络ID号24位，也完全够用了。 除此之外，**GRE还需要有一个地方来封装和解封装GRE的包，这个地方往往是路由器或者有路由功能的Linux机器**。 使用GRE隧道，传输的过程就像下面这张图。这里面有两个网段、两个路由器，中间要通过GRE隧道进行通信。当隧道建立之后，会多出两个Tunnel端口，用于封包、解封包。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/gre-2.png)
+![](../img/gre-2.png)
 
 1. 主机A在左边的网络，IP地址为192.168.1.102，它想要访问主机B，主机B在右边的网络，IP地址为192.168.2.115。于是发送一个包，源地址为192.168.1.102，目标地址为192.168.2.115。 因为要跨网段访问，于是根据默认的default路由表规则，要发给默认的网关192.168.1.1，也即左边的路由器。 
 
@@ -2993,7 +2993,7 @@ ovs-ofctl add-flow br0 "in_port=8 nw_src=192.168.100.102 actions=enqueue:5:2"
 ​		其次，**GRE不支持组播**，因此一个网络中的一个虚机发出一个广播帧后，GRE会将其广播到所有与该节点有隧道连接的节点。
 ​		另外一个问题是目前还是**有很多防火墙和三层网络设备无法解析GRE**，因此它们无法对GRE封装包做合适地过滤和负载均衡。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/gre-4.png)
+![](../img/gre-4.png)
 
 
 
@@ -3001,7 +3001,7 @@ ovs-ofctl add-flow br0 "in_port=8 nw_src=192.168.100.102 actions=enqueue:5:2"
 
 ​		第二种Overlay的技术称为VXLAN。**和三层外面再套三层的GRE不同，VXLAN则是从二层外面就套了一个VXLAN的头，这里面包含的VXLAN ID为24位，也够用了**。在VXLAN头外面还封装了UDP、IP，以及外层的MAC头。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/vxlan-1.png)
+![](../img/vxlan-1.png)
 
 ​		VXLAN作为扩展性协议，也**需要一个地方对VXLAN的包进行封装和解封装**，**实现这个功能的点**称为**VTEP**(VXLAN Tunnel Endpoint)。
 
@@ -3009,12 +3009,12 @@ ovs-ofctl add-flow br0 "in_port=8 nw_src=192.168.100.102 actions=enqueue:5:2"
 
 ​		当一个VTEP启动的时候，它们都需要通过IGMP协议。加入一个组播组，就像加入一个邮件列表，或者加入一个微信群一样，所有发到这个邮件列表里面的邮件，或者发送到微信群里面的消息， 大家都能收到。而当每个物理机上的虚拟机启动之后，VTEP就知道，有一个新的VM上线了，它归我管。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/vxlan-2.png)
+![](../img/vxlan-2.png)
 
 ​		如图，虚拟机1、2、3属于云中同一个用户的虚拟机，因而需要分配相同的VXLAN ID=101。在云的界面上，就可以知道它们的IP地址，于是可以在虚拟机1上ping虚拟机2。
 ​		虚拟机1发现，它不知道虚拟机2的MAC地址，因而包没办法发出去，于是要发送ARP广播。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/vxlan-3.png)
+![](../img/vxlan-3.png)
 
 ​		ARP请求到达VTEP1的时候，VTEP1知道，我这里有一台虚拟机，要访问一台不归我管的虚拟机，需要知道MAC地址，可是我不知道啊，这该咋办呢?
 ​		VTEP1想，我不是加入了一个微信群么?可以在里面@all 一下，问问虚拟机2归谁管。于是VTEP1将ARP请求封装在VXLAN里面，组播出去。
@@ -3024,13 +3024,13 @@ ovs-ofctl add-flow br0 "in_port=8 nw_src=192.168.100.102 actions=enqueue:5:2"
 
 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/vxlan-4.png)
+![](../img/vxlan-4.png)
 
 ​		VTEP2将ARP的回复封装在VXLAN里面，这次不用组播了，直接发回给VTEP1。
 ​		VTEP1解开VXLAN的包，发现是ARP的回复，于是发给虚拟机1。通过这次通信，VTEP1也学到了，虚拟机2归VTEP2管，以后找虚拟机2，去找VTEP2就可以了。
 ​		虚拟机1的ARP得到了回复，知道了虚拟机2的MAC地址，于是就可以发送包了。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/vxlan-5.png)
+![](../img/vxlan-5.png)
 
 ​		虚拟机1发给虚拟机2的包到达VTEP1，它当然记得刚才学的东西，要找虚拟机2，就去VTEP2，于是将包封装在VXLAN里面，外层加上VTEP1和VTEP2的IP地址，发送出去。
 ​		网络包到达VTEP2之后，VTEP2解开VXLAN封装，将包转发给虚拟机2。
@@ -3045,7 +3045,7 @@ ovs-ofctl add-flow br0 "in_port=8 nw_src=192.168.100.102 actions=enqueue:5:2"
 ​		有了GRE和VXLAN技术，我们就可以解决云计算中VLAN的限制了。那如何将这个技术融入云平台呢?
 ​		还记得将你宿舍里面的情况，所有东西都搬到一台物理机上那个故事吗?
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/vxlan-7.png)
+![](../img/vxlan-7.png)
 
 ​		虚拟机是你的电脑，路由器和DHCP Server相当于家用路由器或者寝室长的电脑，外网网口访问互联网，所有的电脑都通过内网网口连接到一个交换机br0上，虚拟机要想访问互联网，需要通过 br0连到路由器上，然后通过路由器将请求NAT后转发到公网。 
 
@@ -3053,7 +3053,7 @@ ovs-ofctl add-flow br0 "in_port=8 nw_src=192.168.100.102 actions=enqueue:5:2"
 
 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/vxlan-6.png)
+![](../img/vxlan-6.png)
 
 ​		可是只有你的寝室长有公网口可以上网，于是你偷偷在三个宿舍中间打了一个隧道，用网线通过隧道将三个宿舍的两个br0连接起来，让其他室友的电脑和你寝室长的电脑，看起来还是连到同一 个br0上，其实中间是通过你隧道中的网线做了转发。 
 
@@ -3061,13 +3061,13 @@ ovs-ofctl add-flow br0 "in_port=8 nw_src=192.168.100.102 actions=enqueue:5:2"
 
 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/vxlan-8.png)
+![](../img/vxlan-8.png)
 
 ​		三台物理机，每台上都有两台虚拟机，分别属于两个不同的用户，**因而VLAN tag都得打地不一样**，这样才不能相互通信。**但是不同物理机上的相同用户，是可以通过隧道相互通信的，因而通过 GRE隧道可以连接到一起**。 
 
 ​		接下来，所有的Flow Table规则都设置在br1上，每个br1都有三个网卡，其中网卡1是对内的，网卡2和3是对外的。 下面我们具体来看Flow Table的设计。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/vxlan-9.png)
+![](../img/vxlan-9.png)
 
 
 
@@ -3091,7 +3091,7 @@ namespace翻译过来就是命名空间。其实很多面向对象的程序设�
 
 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/container-1.png)
+![](../img/container-1.png)
 
 我们创建一个routerns，于是一个独立的网络空间就产生了。你可以在里面尽情设置自己的规则。
 
@@ -3204,7 +3204,7 @@ mount -t cgroup -onet_cls net_cls /sys/fs/cgroup/net_cls
 
 接下来我们要配置TC了。还记得咱们实验TC的时候那个树吗?
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/container-2.png)
+![](../img/container-2.png)
 
 当时我们通过这个命令设定了规则:从1.2.3.4来的，发送给port 80的包，从1:10走;其他从1.2.3.4发送来的包从1:11走;其他的走默认。
 
@@ -3244,7 +3244,7 @@ echo 0x00010011 > /sys/fs/cgroup/net cls/b/net cls.classid
 了解了容器背后的技术，接下来我们来看，容器网络究竟是如何融入物理网络的?
 如果你使用docker run运行一个容器，你应该能看到这样一个拓扑结构。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/docker-1.png)
+![](../img/docker-1.png)
 
 是不是和虚拟机很像?容器里面有张网卡，容器外有张网卡，容器外的网卡连到docker0网桥，通过这个网桥，容器直接实现相互访问。
 如果你用brctl查看docker0网桥，你会发现它上面连着一些网卡。其实这个网桥和第24讲，咱们自己用brctl创建的网桥没什么两样。
@@ -3304,7 +3304,7 @@ ip link set eth0 up
 
 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/docker-3.png)
+![](../img/docker-3.png)
 
 在宿主机上，有这么一条iptables规则: 
 
@@ -3316,7 +3316,7 @@ ip link set eth0 up
 
 例如容器内部监听80端口，可以通Docker run命令中的参数-p 10080:80，将物理机上的10080端口和容器的80端口映射起来， 当外部的客户端访问这个网站的时候，通过访问物理机的10080 端口，就能访问到容器内的80端口了。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/docker-2.png)
+![](../img/docker-2.png)
 
 Docker有两种方式，一种是通过一个进程**docker-proxy**的方式，监听10080，转换为80端口。 
 
@@ -3355,18 +3355,18 @@ Docker有两种方式，一种是通过一个进程**docker-proxy**的方式，�
 
 ​		**第一个问题位置变化**，往往是**通过一个称为注册中心的地方统一管理的，这个是应用自己做的。当一个应用启动的时候，将自己所在环境的IP地址和端口，注册到注册中心指挥部，这样其他的应 用请求它的时候，到指挥部问一下它在哪里就好了。当某个应用发生了变化，例如一台机器挂了，容器要迁移到另一台机器，这个时候IP改变了，应用会重新注册，则其他的应用请求它的时候， 还是能够从指挥部得到最新的位置**。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/flannel-1.png)
+![](../img/flannel-1.png)
 
 ​		接下来是**如何相互通信的问题**。**NAT这种模式，在多个主机的场景下，是存在很大问题的。在物理机A上的应用A看到的IP地址是容器A的，是172.17.0.2，在物理机B上的应用B看到的IP地址是容器B的，不巧也是172.17.0.2，当它们都注册到注册中心的时候，注册中心就是这个图里这样子**。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/flannel-2.png)
+![](../img/flannel-2.png)
 
 ​		这个时候，应用A要访问应用B，当应用A从注册中心将应用B的IP地址读出来的时候，就彻底困惑了，这不是自己访问自己吗?
 ​		怎么解决这个问题呢?
 
 ​		**一种办法是不去注册容器内的IP地址，而是注册所在物理机的IP地址，端口也要是物理机上映射的端口**。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/flannel-3.png)
+![](../img/flannel-3.png)
 
 ​		**这样存在的问题是，应用是在容器里面的，它怎么知道物理机上的IP地址和端口呢?这明明是运维人员配置的，除非应用配合，读取容器平台的接口获得这个IP和端口。一方面，大部分分布式框架都是容器诞生之前就有了，它们不会适配这种场景;另一方面，让容器内的应用意识到容器外的环境，本来就是非常不好的设计**。
 
@@ -3382,7 +3382,7 @@ Docker有两种方式，一种是通过一个进程**docker-proxy**的方式，�
 
 ​	你是不是想到了熟悉的场景?虚拟机也需要跨物理机互通，往往通过Overlay的方式，容器是不是也可以这样做呢? **这里我要说Flannel使用UDP实现Overlay网络的方案。** 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/flannel-4.png)
+![](../img/flannel-4.png)
 
 ​		在物理机A上的容器A里面，能看到的容器的IP地址是172.17.8.2/24，里面设置了默认的路由规则`default via 172.17.8.1 dev eth0`。 如果容器A要访问172.17.9.2，就会发往这个默认的网关172.17.8.1。172.17.8.1就是物理机上面docker0网桥的IP地址，这台物理机上的所有容器都是连接到这个网桥的。 在物理机上面，查看路由策略，会有这样一条`172.17.0.0/24 via 172.17.0.0 dev flannel.1`，也就是说`发往172.17.9.2的网络包会被转发到flannel.1这个网卡`。
 
@@ -3416,7 +3416,7 @@ Docker有两种方式，一种是通过一个进程**docker-proxy**的方式，�
 
 ​		这样就能**通过VXLAN将包转发到另一台机器，从物理机B的flannel.1上解包，变成内部的网络包，通过物理机B上的路由转发到docker0，然后转发到容器B里面**。通信成功。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/flannel-6.png)
+![](../img/flannel-6.png)
 
 
 
@@ -3434,7 +3434,7 @@ Docker有两种方式，一种是通过一个进程**docker-proxy**的方式，�
 
 ​		我们看图中的两台物理机。它们的物理网卡是同一个二层网络里面的。由于两台物理机的容器网段不同，我们完全可以将两台物理机配置成为路由器，并按照容器的网段配置路由表。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/calico-1.png)
+![](../img/calico-1.png)
 
 例如，**在物理机A中，我们可以这样配置:要想访问网段172.17.9.0/24，下一跳是192.168.100.101，也即到物理机B上去**。 
 
@@ -3452,7 +3452,7 @@ Docker有两种方式，一种是通过一个进程**docker-proxy**的方式，�
 
 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/calico-2.png)
+![](../img/calico-2.png)
 
 #### 2.Calico网络的转发细节
 
@@ -3582,7 +3582,7 @@ HTTP 2.0还将所有的传输信息分割为更小的消息和帧，并对它们
 
 通过这两种机制，HTTP 2.0的客户端可以将多个请求分到不同的流中，然后将请求内容拆成帧，进行二进制传输。这些 可以打散乱序发送， 然后根据每个帧首部的流标识符重新组装，并且可以根据优先级，决定优先处理哪个流的数据。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/grpc-1.png)
+![](../img/grpc-1.png)
 
 由于基于HTTP 2.0，GRPC和其他的RPC不同，可以定义 种服务方法。 
 
@@ -3642,7 +3642,7 @@ HTTP 2.0还将所有的传输信息分割为更小的消息和帧，并对它们
 
 ​       **如果是动态的，就需要配置一个服务发现中心，这个服务发现中心要实现Envoy的API，Envoy可以主动去服务发现中心获取转发策略**。
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/grpc-2.png)
+![](../img/grpc-2.png)
 
 ​		看来，**Envoy进程和服务发现中心之间要经常相互通信，互相推送数据，所以Envoy在控制面和服务发现中心沟通的时候，就可以使用GRPC**，也就天然具备在用户面支撑GRPC的能力 。 
 
@@ -3651,13 +3651,13 @@ HTTP 2.0还将所有的传输信息分割为更小的消息和帧，并对它们
 - 一种常见的规则是配置**路由策略**。例如后端的服务有两个版本，可以通过配置Envoy的route，来设置两个版本之间，也即两个cluster之间的route规则，一个占99%的流量，一个占1%的流量。 
 - 另一种常见的规则就是**负载均衡策略**。对于一个cluster下的多个endpoint，可以配置负载均衡机制和健康检查机制，当服务端新增了一个，或者挂了一个，都能够及时配置Envoy， 进行负载均衡。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/grpc-3.png)
+![](../img/grpc-3.png)
 
 ​		所有这些节点的变化都会上传到注册中心，所有这些 略都可以通过注册中心进行下发，所以，更严格的意义上讲，注册中心可以称为注册治理中心。 Envoy这么 ，是不是能够将服务之间的相互调用全部由它代理?如果这样，服务也不用像Dubbo，或者Spring Cloud一样，自己感知到注册中心，自己注册，自己治理，对应用干预比较大。
  		如果我们的应用能够意识不到服务治理的存在，就是直接进行GRPC的调用就可以了。
  		这就是未来服务治理的趋势Serivce Mesh，也即应用之间的相互调用全部由Envoy进行代理，服务之间的治理也被Envoy进行代理，完全将服务治理抽象出来，到平台层解决。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/grpc-4.png)
+![](../img/grpc-4.png)
 
 ### 三十、二进制RPC协议
 
@@ -3665,7 +3665,7 @@ HTTP 2.0还将所有的传输信息分割为更小的消息和帧，并对它们
 
 ​		数据中心内部是如何相互调用的? API网关用来管理API，但是API的实现一般在一个叫作Controller层的地方。这一层对外提供API。由于是让陌生人访问的，我们能看到目前业界主流的，基本都是RESTful的API， 是面向大规模互联网应用的。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/rpc-1.png)
+![](../img/rpc-1.png)
 
 ​		在Controller之内，就是咱们互联网应用的业务逻辑实现。上节讲RESTful的时候，说过业务逻辑的实现最好是无状态的，从而可以横向扩展，但是资源的状态还需要服务端去维 护。资源的状态不应该维护在业务逻辑层，而是在最底层的持久化层，一般会使用分布式数据库和ElasticSearch。 
 
@@ -3685,7 +3685,7 @@ HTTP 2.0还将所有的传输信息分割为更小的消息和帧，并对它们
 
 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/rpc-2.png)
+![](../img/rpc-2.png)
 
 ​		Dubbo会在客户端的本地启动一个Proxy，其实就是客户端的Stub，对于远程的调用都通过这个Stub进行封装。 接下来，Dubbo会从注册中心获取服务端的列表，根据路由规则和负载均衡规则，在多个服务端中选择一个最合适的服务端进行调用。 
 
@@ -3734,11 +3734,11 @@ Hessian2是如何做到这一点的呢?这就需要去看Hessian2的序列化的
 
 ### 三十一、RPC协议综述
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/rpc-3.png)
+![](../img/rpc-3.png)
 
 网络是打通了，那服务之间的互相 用，该怎么实现呢?你可能说，咱不是学过Socket。服务之间分调用方和被调用方，我们就建立一个TCP或者UDP的连接，不就可以通信了?
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/rpc.png)
+![](../img/rpc.png)
 
 #### 1.如何解决下面五个问题 
 
@@ -3764,7 +3764,7 @@ Hessian2是如何做到这一点的呢?这就需要去看Hessian2的序列化的
 
 #### 2.协议标准
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/rpc-4.png)
+![](../img/rpc-4.png)
 
 当客户端的应用想发起一个远程调用时，它实际是通过本调用本地调用方的Stub。它负责将调 用的接口、方法和 参数，通过规定的协议规进行编码，并通过本地的RPCRuntime进行传输， 将调用网络包发送到服务器。 
 
@@ -3782,7 +3782,7 @@ NFS(Network File System)就是网络文件系统。要使NFS成功运行，要�
 
 所以NFS协议就是基于RPC实现的。当然无论是什么RPC，底层都是Socket编程。 
 
-![](/Users/nali/songyintao/SongYintao.github.io/img/rpc-6.png)
+![](../img/rpc-6.png)
 
 XDR(External Data Representation，外部数据表示法)是一个标准的数据压缩格式，可以表示基本的数据类型，也可以表示结构体。
 
