@@ -1,5 +1,5 @@
 ---
-title: zk vs etcd vs eureka vs consul
+title: 分布式系统一致性原理、实现对比分析
 subtitle: 服务发现比较
 layout: post
 tags: [zk,etcd,consul,eureka]
