@@ -11,7 +11,7 @@ tags: [zk,etcd,consul,eureka]
 
 
 
-## 一、各组件对比
+## 一、组件对比
 
 | 特性                   | Consul                 | zookeeper               | etcd             | eureka                       |
 | ---------------------- | ---------------------- | ----------------------- | ---------------- | ---------------------------- |
@@ -30,7 +30,7 @@ tags: [zk,etcd,consul,eureka]
 
 #### 1. 健康检查
 
-Euraka 使用时需要显式配置健康检查支持；
+Euraka 使用时需要显式配置健康检查；
 
 Zookeeper,Etcd 则在失去了和服务进程的连接情况下任务不健康；
 
@@ -42,7 +42,7 @@ Consul 通过 WAN 的 Gossip 协议，完成跨数据中心的同步；而且其
 
 #### 3. KV 存储服务
 
-除了 Eureka ,其他几款都能够对外支持 k-v 的存储服务，所以后面会讲到这几款产品追求高一致性的重要原因。而提供存储服务，也能够较好的转化为动态配置服务哦。
+除了 Eureka ,其他几款都能够对外支持 k-v 的存储服务，所以后面会讲到这几款产品追求高一致性的重要原因。而提供存储服务，也能够较好的转化为动态配置服务。
 
 #### 4.产品设计中 CAP 理论的取舍
 
@@ -64,7 +64,7 @@ Etcd 还提供了Grpc的支持。
 
 #### 6. Watch的支持（客户端观察到服务提供者变化）
 
-Zookeeper 支持服务器端推送变化，Eureka 2.0(正在开发中)也计划支持。 Eureka 1,Consul,Etcd则都通过长轮询的方式来实现变化的感知；
+Zookeeper 支持服务器端推送变化。 Eureka 1,Consul,Etcd则都通过长轮询的方式来实现变化的感知；
 
 #### 7.自身集群的监控
 
@@ -86,7 +86,7 @@ Consul,Zookeeper 支持ACL，另外 Consul,Etcd 支持安全通道https.
 
 [Paxos、Raft分布式一致性最佳实践](https://zhuanlan.zhihu.com/p/31727291)
 
-本文主要说明分布式一致性问题与分布式一致性算法的典型应用场景，帮助后面大家更好的理解Paxos、Raft等分布式一致性算法。
+主要说明分布式一致性问题与分布式一致性算法的典型应用场景，帮助后面大家更好的理解Paxos、Raft等分布式一致性算法。
 
 ## 一、分布式一致性 (Consensus)
 
@@ -100,35 +100,46 @@ Consul,Zookeeper 支持ACL，另外 Consul,Etcd 支持安全通道https.
 
 对于这些问题有一些特定的算法，但是，分布式一致性问题试图探讨这些问题的一个更一般的形式，如果能够解决分布式一致性问题，则以上的问题都可以解决。
 
-分布式一致性问题的定义如下图所示：
+**分布式一致性问题**
+
+> - 为了达成一致，每个进程都提出自己的提议（propose）
+> - 最终通过分布式一致性算法，所有正确运行的进程决定（decide）相同的值。
+
+定义如下图所示：
 
 
 
 ![img](https://pic3.zhimg.com/80/v2-fec5a5ee8ee501ffcec3c0a48ce60e12_hd.jpg)
 
-**分布式一致性问题**
-
-为了达成一致，每个进程都提出自己的提议（propose），最终通过分布式一致性算法，所有正确运行的进程决定（decide）相同的值。
 
 
+实例：
 
 ![img](https://pic1.zhimg.com/80/v2-3042b89d939ba9acb765ebcda23f5bd4_hd.jpg)
 
-**分布式一致性实例**
 
-如果在一个不出现故障的系统中，很容易解决分布式一致性问题。但是**实际分布式系统一般是基于消息传递的异步分布式系统，进程可能会慢、被杀死或者重启，消息可能会延迟、丢失、重复、乱序等**。
 
-在一个可能发生上述异常的分布式系统中如何就某个值达成一致，形成一致的决议，保证不论发生以上任何异常，都不会破坏决议的一致性，这些正是一致性算法要解决的问题。
+**分布式系统存在的问题：**
+
+> 实际分布式系统一般是基于消息传递的异步分布式系统。
+>
+> - 进程可能会慢、被杀死或者重启；
+> - 消息可能会延迟、丢失、重复、乱序等。
+
+**一致性算法的挑战**：
+
+> - 在一个可能发生上述异常的分布式系统中，**如何就某个值达成一致，形成一致的决议**；
+> - 保证不论发生以上任何异常，都**不会破坏决议的一致性**。
 
 
 
 ## 二、分布式一致性算法典型应用场景
 
-我们在**分布式存储系统**中经常**使用多副本的方式实现容错，每一份数据都保存多个副本，这样部分副本的失效不会导致数据的丢失**。<u>每次更新操作都需要更新数据的所有副本，使多个副本的数据保持一致</u>。
+我们在分布式存储系统中经常使用多副本的方式实现容错，每一份数据都保存多个副本，这样部分副本的失效不会导致数据的丢失。每次更新操作都需要更新数据的所有副本，使多个副本的数据保持一致。
 
-那么问题来了，如何在一个可能出现各种故障的异步分布式系统中保证同一数据的多个副本的一致性 (Consistency) 呢？
+####  0.问题
 
-
+如何在一个可能出现各种故障的异步分布式系统中保证同一数据的多个副本的一致性 (Consistency) 呢？
 
 #### 1. 传统的主从同步
 
@@ -178,15 +189,21 @@ Consul,Zookeeper 支持ACL，另外 Consul,Etcd 支持安全通道https.
 
 如果主副本在写请求成功返回之后和更新其它副本之前宕机失效，则会**造成成功写入的数据丢失，一致性被破坏**。
 
+#### 3. 应用示例
 
+在Oracle里面，上述同步和异步复制方式分别对应`Oracle Data Guard`的一种**数据保护模式**。
 
-熟悉Oracle的朋友应该对上述同步方式非常熟悉，上述同步和异步复制方式分别对应`Oracle Data Guard`的一种**数据保护模式**。
+- **同步复制**为**最高保护模式 (Maximum Protection)**
+- **异步复制**为**最高性能模式 (Maximum Performance)**
+- **最高可用性模式 (Maximum Availability) 介于两者之间**，在正常情况下，它和最高保护模式一样，但一旦同步出现故障，立即切换成最高性能模式。
 
-**同步复制**为**最高保护模式 (Maximum Protection)**，**异步复制**为**最高性能模式 (Maximum Performance)**，还有一种**最高可用性模式 (Maximum Availability) 介于两者之间**，在正常情况下，它和最高保护模式一样，但一旦同步出现故障，立即切换成最高性能模式。
+#### 4. 存在的问题
 
-传统的主从同步无法同时保证数据的一致性和可用性，此问题是典型的分布式系统中一致性和可用性不可兼得的例子，分布式系统中著名的CAP理论从理论上证明了这个问题。
+**传统的主从同步无法同时保证数据的一致性和可用性**，此问题是典型的分布式系统中**一致性**和**可用性**不可兼得的例子，分布式系统中著名的CAP理论从理论上证明了这个问题。
 
 **而Paxos、Raft等分布式一致性算法则可在一致性和可用性之间取得很好的平衡，在保证一定的可用性的同时，能够对外提供强一致性，因此Paxos、Raft等分布式一致性算法被广泛的用于管理副本的一致性，提供高可用性**。
+
+
 
 ## 三、CAP理论
 
@@ -204,9 +221,9 @@ CAP理论是分布式系统、特别是分布式存储领域中被讨论的最�
 
 理解CAP理论最简单的方式是**想象两个副本处于分区两侧，即两个副本之间的网络断开，不能通信**。
 
-- 如果允许其中一个副本更新，则会导致数据不一致，即丧失了C性质。
-- 如果为了保证一致性，将分区某一侧的副本设置为不可用，那么又丧失了A性质。
-- 除非两个副本可以互相通信，才能既保证C又保证A，这又会导致丧失P性质。
+> - 如果允许其中一个副本更新，则会导致数据不一致，即丧失了C性质。
+> - 如果为了保证一致性，将分区某一侧的副本设置为不可用，那么又丧失了A性质。
+> - 除非两个副本可以互相通信，才能既保证C又保证A，这又会导致丧失P性质。
 
 
 
@@ -214,7 +231,7 @@ CAP理论是分布式系统、特别是分布式存储领域中被讨论的最�
 
 CAP理论的表述很好地服务了它的目的，开阔了分布式系统设计者的思路，在多样化的取舍方案下设计出多样化的系统。在过去的十几年里确实涌现了不计其数的新系统，也随之**在一致性和可用性的相对关系上产生了相当多的争论。**
 
-既然在分布式系统中一致性和可用性只能选一个。那Paxos、Raft等分布式一致性算法是如何做到在保证一定的可用性的同时，对外提供强一致性呢。
+既然在分布式系统中一致性和可用性只能选一个。**那Paxos、Raft等分布式一致性算法是如何做到在保证一定的可用性的同时，对外提供强一致性呢**。
 
 在CAP理论提出十二年之后，其作者又出来辟谣。“三选二”的公式一直存在着误导性，它会过分简单化各性质之间的相互关系：
 
@@ -228,27 +245,35 @@ CAP理论的表述很好地服务了它的目的，开阔了分布式系统设�
 
 ## 四、多副本状态机
 
+#### 1. 背景知识
+
 将多副本管理的模型抽象出来，可得到一个通用的模型：**多副本状态机 (Replicated State Machine)** 。
 
-**多副本状态机**是指<u>多台机器具有完全相同的状态，并且运行完全相同的确定性状态机</u>。
+> **多副本状态机**是指多台机器具有完全相同的状态，并且运行完全相同的**确定性状态机**。
 
 通过使用这样的状态机，**可以解决很多分布式系统中的容错问题**。
 
-因为多副本状态机通常可以容忍半数节点故障，且所有正常运行的副本节点状态都完全一致，所以可以使用多副本状态机来实现需要避免单点故障的组件。
+**优点：**
 
-#### 1. 高可用"单点"的集中式架构
+因为多副本状态机通常**可以容忍半数节点故障**，且**所有正常运行的副本节点状态都完全一致**，所以可以使用多副本状态机来实现需要避免单点故障的组件。
+
+**使用场景：**
+
+> **多副本状态机**在分布式系统中被用于解决各种容错问题。**比如，集中式的选主或是互斥算法中的协调者 (Coordinator)**。
+>
+> - 集中式的领导者或互斥算法逻辑简单
+> - 但**最大的问题是协调者的单点故障问题**
+> - 通过采用**多副本状态机**来实现协调者实现了高可用的“单点”，回避了单点故障。
+
+ **高可用"单点"的集中式架构**
 
 ![img](https://pic3.zhimg.com/80/v2-94203ffad7b259917a89ed212cfb92be_hd.jpg)
 
-**多副本状态机**在分布式系统中被用于解决各种容错问题。
 
-**比如，集中式的选主或是互斥算法中的协调者 (Coordinator)**。
 
-集中式的领导者或互斥算法逻辑简单，但**最大的问题是协调者的单点故障问题**，通过采用**多副本状态机**来实现协调者实现了高可用的“单点”，回避了单点故障。
+`GFS，HDFS`等典型地使用一个独立的多副本状态机来管理领导者选举与保存集群配置信息，以备节点宕机后信息能够保持。`Chubby`与`ZooKeeper`等都是使用多副本状态机的例子。
 
-`GFS，HDFS，RAMCloud`等典型地使用一个独立的多副本状态机来管理领导者选举与保存集群配置信息，以备节点宕机后信息能够保持。
-
-`Chubby`与`ZooKeeper`以及`Boxwood`等都是使用多副本状态机的例子。
+**核心逻辑：**
 
 多副本状态机的**每个副本上都保存有完全相同的操作日志，保证所有状态机副本按照相同的顺序执行相同的操作，这样由于状态机是确定性的，则会得到相同的状态**。
 
@@ -264,23 +289,23 @@ CAP理论的表述很好地服务了它的目的，开阔了分布式系统设�
 
 具体流程：
 
-- 服务器上的一致性模块，接收来自客户端的命令，并且添加到他们的日志中。
+- 服务器上的**一致性模块**，接收来自客户端的命令，并且添加到他们的日志中。
 
-- 它与其它服务器的一致性模块通讯，以确保每个日志最终以同样的顺序保存同样的请求，即使有些服务器失败。
-- 一旦命令被适当地复制，每台服务器的状态机以日志的顺序执行，将输出返回给客户端。
+- 它**与其它服务器的一致性模块通讯**，以确保每个日志最终以同样的顺序保存同样的请求，即使有些服务器失败。
+- 一旦命令**被适当地复制**，每台服务器的状态机以日志的顺序执行，将输出返回给客户端。
 - 结果多台服务器就像来自单个高度一致的高可用状态机。
 
 
 
 
 
-# 阶段提交
+# 历史协议
 
 2PC (两阶段提交)协议和3PC (三阶段提交)协议本身其实很简单. 我尽量通过少写字, 多上图的方法, 用一个coordinator和三个voter达成共识的例子来说明这两个协议的想法.
 
 ## 2PC (两阶段提交)协议
 
-**2PC的原理**
+#### 1. 2PC的原理
 
 顾名思义, 2PC协议有两个阶段:Propose和Commit. **在无failure情况下**的2PC协议流程的画风是这样的:
 
@@ -304,9 +329,11 @@ CAP理论的表述很好地服务了它的目的，开阔了分布式系统设�
 
 ​									图2: 2PC, coordinator提议没有通过, voter{1,2,3}保持旧有的共识
 
-**2PC的缺陷**
+#### 2. 2PC的缺陷
 
-2PC的缺点在于**不能处理fail-stop形式的节点failure.** 比如下图这种情况. 假设coordinator和voter3都在Commit这个阶段crash了, 而voter1和voter2没有收到commit消息. 这时候voter1和voter2就陷入了一个困境. 因为他们并不能判断现在是两个场景中的哪一种:
+2PC的缺点在于**不能处理fail-stop形式的节点failure.** 比如下图这种情况. 
+
+假设**coordinator和voter3都在Commit这个阶段crash了**, 而voter1和voter2没有收到commit消息. 这时候voter1和voter2就陷入了一个困境. 因为他们并不能判断现在是两个场景中的哪一种:
 
  (1)上轮全票通过然后voter3第一个收到了commit的消息并在commit操作之后crash了
 
@@ -314,9 +341,9 @@ CAP理论的表述很好地服务了它的目的，开阔了分布式系统设�
 
 ![img](https://pic3.zhimg.com/80/v2-a9e4ef8b9082ffdf76bc426e61ba3ed2_hd.jpg)
 
-​								图3: 2PC, coordinator和voter3 crash, voter{1,2}无法判断当前状态而卡死
+​								图3: 2PC, coordinator和voter3 crash, **voter{1,2}无法判断当前状态而卡死**
 
-2PC在这种fail-stop情况下会失败是因为voter在得知Propose Phase结果后就直接commit了, 而并没有在commit之前告知其他voter自己已收到Propose Phase的结果. 从而导致在coordinator和一个voter双双掉线的情况下, 其余voter不但无法复原Propose Phase的结果, 也无法知道掉线的voter是否打算甚至已经commit. 为了解决这一问题, 3PC了解一下.
+2PC在这种fail-stop情况下会失败是因为voter在得知Propose Phase结果后就直接commit了, 而并没有在commit之前告知其他voter自己已收到Propose Phase的结果. **从而导致在coordinator和一个voter双双掉线的情况下, 其余voter不但无法复原Propose Phase的结果, 也无法知道掉线的voter是否打算甚至已经commit**. 为了解决这一问题, 3PC了解一下.
 
 
 
@@ -324,17 +351,25 @@ CAP理论的表述很好地服务了它的目的，开阔了分布式系统设�
 
 ## 3PC (三阶段提交)协议
 
-**3PC的原理**
+#### 1. 3PC的原理
 
-简单的说来, 3PC就是**把2PC的Commit阶段拆成了PreCommit和Commit两个阶段**. 通过进入增加的这一个PreCommit阶段, voter可以得到Propose阶段的投票结果, 但不会commit; 而通过进入Commit阶段, voter可以盘出其他每个voter也都打算commit了, 从而可以放心的commit.
+简单的说来, 3PC就是**把2PC的Commit阶段拆成了PreCommit和Commit两个阶段**. 
 
-**换言之, 3PC在2PC的Commit阶段里增加了一个barrier**(即相当于告诉其他所有voter, 我收到了Propose的结果啦). 在这个barrier之前coordinator掉线的话, 其他voter可以得出结论不是每个voter都收到Propose Phase的结果, 从而放弃或选出新的coordinator; **在这个barrier之后coordinator掉线的话, 每个voter会放心的commit, 因为他们知道其他voter也都做同样的计划**.
+- 通过进入增加的这一个PreCommit阶段, voter可以得到Propose阶段的投票结果, 但不会commit; 
+- 而通过进入Commit阶段, voter可以盘出其他每个voter也都打算commit了, 从而可以放心的commit.
+
+**换言之, 3PC在2PC的Commit阶段里增加了一个barrier**(即相当于告诉其他所有voter, 我**收到了Propose的结果**啦). 
+
+- 在这个barrier之前coordinator掉线的话, 其他voter可以得出结论不是每个voter都收到Propose Phase的结果, 从而放弃或选出新的coordinator;
+-  **在这个barrier之后coordinator掉线的话, 每个voter会放心的commit, 因为他们知道其他voter也都做同样的计划**.
 
 ![img](https://pic2.zhimg.com/80/v2-28c17c86e689007015a4853f0d0c4a89_hd.jpg)
 
 ​									图4: 3PC, coordinator提议通过, voter{1,2,3}达成新的共识
 
-**3PC的缺陷**
+#### 2.3PC的缺陷
+
+##### 1. 网络分区
 
 3PC可以有效的处理fail-stop的模式, 但**不能处理网络划分(network partition)的情况---节点互相不能通信**. 假设在PreCommit阶段所有节点被一分为二, 收到preCommit消息的voter在一边, 而没有收到这个消息的在另外一边. 在这种情况下, **两边就可能会选出新的coordinator而做出不同的决定**.
 
@@ -342,7 +377,13 @@ CAP理论的表述很好地服务了它的目的，开阔了分布式系统设�
 
 ​										图5: 3PC, network partition, voter{1,2,3}失去共识
 
-除了网络划分以外, 3PC也不能处理fail-recover的错误情况. 简单说来当coordinator收到preCommit的确认前crash, 于是其他某一个voter接替了原coordinator的任务而开始组织所有voter commit. 而与此同时原coordinator重启后又回到了网络中, 开始继续之前的回合---发送abort给各位voter因为它并没有收到preCommit. 此时有可能会出现原coordinator和继任的coordinator给不同节点发送相矛盾的commit和abort指令, 从而出现个节点的状态分歧.
+##### 2. fail-recover
+
+除了网络划分以外, **3PC也不能处理fail-recover的错误情况**. 
+
+简单说来**当coordinator收到preCommit的确认前crash**, 于是其他某一个voter接替了原coordinator的任务而开始组织所有voter commit. 而与此同时原coordinator重启后又回到了网络中, 开始继续之前的回合---发送abort给各位voter因为它并没有收到preCommit. 
+
+此时有可能会出现**原coordinator和继任的coordinator给不同节点发送相矛盾的commit和abort指令, 从而出现节点的状态分歧.**
 
 这种情况等价于一个更真实或者更负责的网络环境假设: 异步网络. 在这种假设下, 网络传输时间可能任意长. 为了解决这种情况, 那就得请出下一篇的主角: Paxos
 
@@ -359,11 +400,9 @@ CAP理论的表述很好地服务了它的目的，开阔了分布式系统设�
 
 
 
-
-
 # Paxos简介
 
-[Paxos、Raft分布式一致性算法应用场景](https://zhuanlan.zhihu.com/p/31727291)一文讲述了分布式一致性问题与分布式一致性算法的典型应用场景。作为分布式一致性代名词的Paxos算法号称是最难理解的算法。本文试图用通俗易懂的语言讲述Paxos算法。
+上面讲述了分布式一致性问题与分布式一致性算法的典型应用场景。作为分布式一致性代名词的Paxos算法号称是最难理解的算法。本文试图用通俗易懂的语言讲述Paxos算法。
 
 ## 一、Paxos算法背景
 
@@ -643,13 +682,13 @@ Epoch相当于paxos中的proposerID，Raft中的term，相当于一个国家，�
 
 **节点中的持久化信息：**
 
-- **history:**a log of transaction proposals accepted; 历史提议日志文件
+- **history:**a log of transaction proposals accepted; **历史提议日志文件**
 
-- **acceptedEpoch:**the epoch number of the last NEWEPOCH message accepted; 集群中的最近最新Epoch
+- **acceptedEpoch:**the epoch number of the last NEWEPOCH message accepted; **集群中的最近最新Epoch**
 
-- **currentEpoch:**the epoch number of the last NEWLEADER message accepted; 集群中的最近最新Leader的Epoch
+- **currentEpoch:**the epoch number of the last NEWLEADER message accepted; **集群中的最近最新Leader的Epoch**
 
-- **lastZxid:**zxid of the last proposal in the history log; 历史提议日志文件的最后一个提议的zxid
+- **lastZxid:**zxid of the last proposal in the history log; **历史提议日志文件的最后一个提议的zxid**
 
 > 在 ZAB 协议的事务编号 Zxid 设计中，**Zxid**是一个 64 位的数字，
 >
@@ -674,7 +713,7 @@ Zab协议分为四个阶段：
 
 #### Phase 1: Discovery（发现阶段，Leader不存在）
 
-在这个阶段，PL收集Follower发来的acceptedEpoch，并确定了PL的Epoch和Zxid最大，则会生成一个NEWEPOCH分发给Follower，Follower确认无误后返回ACK给PL。
+在这个阶段，**PL收集Follower发来的acceptedEpoch**，并确定了PL的Epoch和Zxid最大，则会**生成一个NEWEPOCH分发给Follower，Follower确认无误后返回ACK给PL**。
 
 **这个一阶段的主要目的是PL生成NEWEPOCH，同时更新Followers的acceptedEpoch，并寻找最新的historylog，赋值给PL的history。**
 
@@ -684,7 +723,7 @@ Zab协议分为四个阶段：
 
 #### Phase 2: Synchronization（同步阶段，Leader不存在）
 
-同步阶段主要是利用 leader 前一阶段获得的最新提议历史，同步集群中所有的副本。只有当 quorum 都同步完成，PL才会成为EL。follower 只会接收 zxid 比自己的 lastZxid 大的提议。
+同步阶段主要是**利用 leader 前一阶段获得的最新提议历史，同步集群中所有的副本**。只有当 quorum 都同步完成，PL才会成为EL。**follower 只会接收 zxid 比自己的 lastZxid 大的提议**。
 
 **这个一阶段的主要目的是同步PL的historylog副本。**
 
@@ -699,6 +738,8 @@ Zab协议分为四个阶段：
 ### 三、zookeeper中zab协议的实现
 
 协议的 Java 版本实现跟上面的定义有些不同，选举阶段使用的是 Fast Leader Election（FLE），它包含了 Phase 1 的发现职责。因为**FLE 会选举拥有最新提议历史的节点作为 leader，这样就省去了发现最新提议的步骤**。实际的实现将 Phase 1 和 Phase 2 合并为 Recovery Phase（恢复阶段）。
+
+#### 1. ZAB 的实现
 
 所以，ZAB 的实现只有三个阶段：
 
@@ -728,31 +769,25 @@ Zab协议分为四个阶段：
 
 同上
 
-#### Leader故障
+#### 2. Leader故障
 
 如果是Leader故障，首先进行Phase 1:Fast Leader Election，然后Phase 2:Recovery Phase，恢复阶段保证了如下两个问题，这两个问题同时也和Raft中的Leader故障解决的问题是一样的，**总之就是要保证Leader操作日志是最新的**：
 
-已经被处理的消息不能丢
+- 已经被处理的消息不能丢
 
 
 
 ![img](https://ask.qcloudimg.com/http-save/developer-news/t1f078ibjj.jpeg?imageView2/2/w/1620)
 
-被丢弃的消息不能再次出现
+- 被丢弃的消息不能再次出现
 
 
 
 ![img](https://ask.qcloudimg.com/http-save/developer-news/gunsb2n6q4.jpeg?imageView2/2/w/1620)
 
-总结
+### 四、总结
 
 Zab和Raft都是强一致性协议，但是Zab和Raft的实质是一样的，都是mutli-paxos衍生出来的强一致性算法。简单而言，他们的算法都都是先通过Leader选举，选出一个Leader，然后Leader接受到客户端的提议时，都是先写入操作日志，然后再与其他Followers同步日志，Leader再commit提议，再与其他Followers同步提议。如果Leader故障，重新走一遍选举流程，选取最新的操作日志，然后同步日志，接着继续接受客户端请求等等。过程都是一样，只不过两个的实现方式不同，描述方式不同。**实现Raft的核心是Term，Zab的核心是Zxid，反正Term和Zxid都是逻辑时钟。**
-
-
-
-
-
-
 
 
 
@@ -1136,7 +1171,19 @@ ZooKeeper is a centralized service for maintaining configuration information, na
 
 Learn more about ZooKeeper on the [ZooKeeper Wiki](https://cwiki.apache.org/confluence/display/ZOOKEEPER/Index).
 
+**zookeeper提供的原语服务**
 
+1. 创建节点。
+
+2. 删除节点
+
+3. 更新节点
+
+4. 获取节点信息
+
+5. 权限控制
+
+6. 事件监听
 
 ### 2. eureka
 
@@ -1409,8 +1456,6 @@ Zookeeper是**基于CP**来设计的，即**任何时刻对Zookeeper的访问请
 
 
 
-
-
 **1. 前言**
 
 **服务注册中心**：给客户端提供可供调用的服务列表，客户端在进行远程服务调用时，根据服务列表然后选择服务提供方的服务地址进行服务调用。
@@ -1437,9 +1482,7 @@ Eureka看明白了这一点，因此在设计时就优先保证可用性。Eurek
 
 **4. 更深入的探讨**
 
-下面转发一篇更深入探讨zookeeper与eureka作为注册中心区别的问题，文章转发自
 
-http://dockone.io/article/78 ，该文翻译了国外的一篇文章。
 
 **为什么不应该使用ZooKeeper做服务发现**
 

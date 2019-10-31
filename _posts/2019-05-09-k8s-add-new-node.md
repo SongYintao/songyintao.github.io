@@ -500,8 +500,8 @@ root@test-a3-60-14:/etc/cni/net.d# ip addr
 ##选择eno3,创建vlan 96,启动macvlan eno3.9
 
 root@test-a3-60-14:/etc/cni/net.d# ip link set eno3 promisc on
-root@test-a3-60-14:/etc/cni/net.d# ip link add link eno3 name eno3.96 type vlan id 96
-root@test-a3-60-14:~/k8s# ip link set eno3.96 up
+root@test-a3-60-14:/etc/cni/net.d# ip link add link eno1 name eno1.96 type vlan id 96
+root@test-a3-60-14:~/k8s# ip link set eno1.96 up
 root@test-a3-60-14:~/k8s#
 root@test-a3-60-14:~/k8s# ip addr
 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
@@ -544,7 +544,7 @@ root@test-a3-60-14:~/k8s# ip addr
 	"cniVersion": "0.3.1",
 	"name": "macnet",
 	"type": "macvlan",
-	"master": "eno3.96",
+	"master": "eno1.96",
 	"ipam": {
 
 	"type": "host-local",
@@ -760,7 +760,7 @@ root@test-a3-60-14:/lib/systemd/system# systemctl start node_exporter.service
 | 192.168.60.33 | 172.31.213.x |                |        |
 | 192.168.60.34 | 172.31.214.x |                |        |
 | 192.168.60.35 | 172.31.215.x |                |        |
-| 192.168.60.36 |              | N  linux有问题 |        |
+| 192.168.60.36 | 172.31.216.x | N  linux有问题 |        |
 | 192.168.60.   |              | eno3.96        |        |
 | 192.168.60.83 | master       |                |        |
 | 192.168.60.86 | 172.31.217   | eno1.96        |        |
@@ -777,7 +777,7 @@ root@test-a3-60-14:/lib/systemd/system# systemctl start node_exporter.service
 | 192.168.60.97 | 172.31.227   |                |        |
 | 192.168.60.98 | 172.31.228   |                |        |
 | 192.168.60.99 | 172.31.229   |                |        |
-|               |              |                |        |
+| 100           | 230          |                |        |
 | 192.168.33.12 | 172.28.4.x   |                |        |
 | 192.168.33.13 | 172.28.2.x   |                |        |
 | 192.168.33.14 | 172.28.3     |                |        |
@@ -841,6 +841,10 @@ sudo apt-get -y install docker-ce
 # Step 2: 安装指定版本的Docker-CE: (VERSION 例如上面的 17.03.1~ce-0~ubuntu-xenial)
 # sudo apt-get -y install docker-ce=[VERSION]
 ```
+
+deb [arch=amd64] https://mirrors.ustc.edu.cn/docker-ce/linux/ubuntu xenial stable
+
+
 
 
 
