@@ -7,6 +7,191 @@ layout: post
 
 sonar lint 插件源码分析。
 
+[idea plugin 插件开发文档](http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started.html)
+
+使用基于gradle的开发方式。
+
+[具体步骤](http://www.jetbrains.org/intellij/sdk/docs/tutorials/build_system/prerequisites.html)
+
+#  IDEA plugin开发指南
+
+
+
+# Plugin Components
+
+Components are the fundamental concept of plugin integration. There are three kinds of components:
+
+- **Application level components** are created and initialized when your IDE starts up. They can be acquired from the [Application](https://upsource.jetbrains.com/idea-ce/file/idea-ce-e97504227f5f68c58cd623c8f317a134b6d440b5/platform/core-api/src/com/intellij/openapi/application/Application.java) instance by using the `getComponent(Class)` method.
+- **Project level components** are created for each [`Project`](https://upsource.jetbrains.com/idea-ce/file/idea-ce-e97504227f5f68c58cd623c8f317a134b6d440b5/platform/core-api/src/com/intellij/openapi/project/Project.java) instance in the IDE. (Please note that components may be created even for unopened projects.) They can be acquired from the `Project` instance by using the `getComponent(Class)` method.
+- **Module level components** are created for each [`Module`](https://upsource.jetbrains.com/idea-ce/file/idea-ce-e97504227f5f68c58cd623c8f317a134b6d440b5/platform/core-api/src/com/intellij/openapi/module/Module.java) inside every project loaded in the IDE. Module level components can be acquired from a `Module` instance with the `getComponent(Class)` method.
+
+**Every component should have interface and implementation classes specified in the configuration file. The interface class will be used for retrieving the component from other components, and the implementation class will be used for component instantiation.**
+
+**Note that two components of the same level ([Application](https://upsource.jetbrains.com/idea-ce/file/idea-ce-e97504227f5f68c58cd623c8f317a134b6d440b5/platform/core-api/src/com/intellij/openapi/application/Application.java), [Project](https://upsource.jetbrains.com/idea-ce/file/idea-ce-e97504227f5f68c58cd623c8f317a134b6d440b5/platform/core-api/src/com/intellij/openapi/project/Project.java) or [Module](https://upsource.jetbrains.com/idea-ce/file/idea-ce-e97504227f5f68c58cd623c8f317a134b6d440b5/platform/core-api/src/com/intellij/openapi/module/Module.java)) cannot have the same interface class.** The same class may be specified for both interface and Implementation.
+
+Each component has a unique name which is used for its externalization and other internal needs. The name of a component is returned by its `getComponentName()` method.
+
+
+
+## Components naming notation
+
+It is recommended to name components in the form `<plugin_name>.<component_name>`.
+
+
+
+## Application level components
+
+An application component that has no dependencies should have a constructor with no parameters which will be used for its instantiation. If an application component depends on other application components, it can specify these components as constructor parameters. The *IntelliJ Platform* will ensure that the components are instantiated in the correct order to satisfy the dependencies.
+
+Application level components must be registered in the `<application-components>` section of the plugin.xml file (see [Plugin Configuration File](http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_configuration_file.html)).
+
+
+
+## Project level components
+
+Optionally, a project level component’s implementation class may implement the [ProjectComponent](https://upsource.jetbrains.com/idea-ce/file/idea-ce-e97504227f5f68c58cd623c8f317a134b6d440b5/platform/core-api/src/com/intellij/openapi/components/ProjectComponent.java) interface.
+
+The constructor of a project level component can have a parameter of the [Project](https://upsource.jetbrains.com/idea-ce/file/idea-ce-e97504227f5f68c58cd623c8f317a134b6d440b5/platform/core-api/src/com/intellij/openapi/project/Project.java) type, if it needs the project instance. It can also specify other application-level or project-level components as parameters, if it depends on those components.
+
+Project level components must be registered in the `<project-components>` section of the `plugin.xml` file (see [Plugin Configuration File](http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_configuration_file.html)).
+
+
+
+## Module level components
+
+Optionally, a module level component’s implementation class may implement the [ModuleComponent](https://upsource.jetbrains.com/idea-ce/file/idea-ce-e97504227f5f68c58cd623c8f317a134b6d440b5/platform/projectModel-api/src/com/intellij/openapi/module/ModuleComponent.java) interface.
+
+The constructor of a module level component can have a parameter of the Module type, if it needs the module instance. It can also specify other application level, project level or module level components as parameters, if it depends on those components.
+
+Module level components must be registered in the `<module-components>` section of the `plugin.xml` file (see [Plugin Configuration File](http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_configuration_file.html)).
+
+
+
+
+
+## Persisting the state of components
+
+The state of every component will be automatically saved and loaded if the component’s class implements the [JDOMExternalizable](https://upsource.jetbrains.com/idea-ce/file/idea-ce-e97504227f5f68c58cd623c8f317a134b6d440b5/platform/util/src/com/intellij/openapi/util/JDOMExternalizable.java)(deprecated) or [PersistentStateComponent](https://upsource.jetbrains.com/idea-ce/file/idea-ce-e97504227f5f68c58cd623c8f317a134b6d440b5/platform/projectModel-api/src/com/intellij/openapi/components/PersistentStateComponent.java) interface.
+
+When the component’s class implements the [PersistentStateComponent](https://upsource.jetbrains.com/idea-ce/file/idea-ce-e97504227f5f68c58cd623c8f317a134b6d440b5/platform/projectModel-api/src/com/intellij/openapi/components/PersistentStateComponent.java) interface, the component state is saved in an XML file that you can specify using the [@State](https://upsource.jetbrains.com/idea-ce/file/idea-ce-e97504227f5f68c58cd623c8f317a134b6d440b5/platform/projectModel-api/src/com/intellij/openapi/components/State.java) and [@Storage](https://upsource.jetbrains.com/idea-ce/file/idea-ce-e97504227f5f68c58cd623c8f317a134b6d440b5/platform/projectModel-api/src/com/intellij/openapi/components/Storage.java) annotations in your Java code.
+
+When the component’s class implements the [JDOMExternalizable](https://upsource.jetbrains.com/idea-ce/file/idea-ce-e97504227f5f68c58cd623c8f317a134b6d440b5/platform/util/src/com/intellij/openapi/util/JDOMExternalizable.java) interface, the components save their state in the following files:
+
+- Project level components save their state to the project (`.ipr`) file.
+
+  However, if the workspace option in the `plugin.xml` file is set to `true`, the component saves its configuration to the workspace (`.iws`) file instead.
+
+- Module level components save their state to the module (`.iml`) file.
+
+For more information and samples, refer to [Persisting State of Components](http://www.jetbrains.org/intellij/sdk/docs/basics/persisting_state_of_components.html).
+
+
+
+
+
+## Defaults
+
+The defaults (a component’s predefined settings) should be placed in the `<component_name>.xml` file. Place this file in the plugin’s classpath in the folder corresponding to the default package. The `readExternal()` method will be called on the `<component>` root tag.
+
+If a component has defaults, the `readExternal()` method is called twice:
+
+- The first time for defaults
+- The second time for saved configuration
+
+
+
+
+
+## Plugin components lifecycle
+
+The components are loaded in the following order:
+
+- Creation - constructor is invoked.
+- Initialization - the `initComponent` method is invoked (if the component implements the [BaseComponent](https://upsource.jetbrains.com/idea-ce/file/idea-ce-e97504227f5f68c58cd623c8f317a134b6d440b5/platform/core-api/src/com/intellij/openapi/components/BaseComponent.java) interface).
+- Configuration - the `readExternal` method is invoked (if the component implements [JDOMExternalizable](https://upsource.jetbrains.com/idea-ce/file/idea-ce-e97504227f5f68c58cd623c8f317a134b6d440b5/platform/util/src/com/intellij/openapi/util/JDOMExternalizable.java) interface), or the `loadState`method is invoked (if the component implements [PersistentStateComponent](https://upsource.jetbrains.com/idea-ce/file/idea-ce-e97504227f5f68c58cd623c8f317a134b6d440b5/platform/projectModel-api/src/com/intellij/openapi/components/PersistentStateComponent.java) and has non-default persisted state).
+- For module components, the `moduleAdded` method of the [ModuleComponent](https://upsource.jetbrains.com/idea-ce/file/idea-ce-e97504227f5f68c58cd623c8f317a134b6d440b5/platform/projectModel-api/src/com/intellij/openapi/module/ModuleComponent.java) interface is invoked to notify that a module has been added to the project.
+- For project components, the `projectOpened` method of the [ProjectComponent](https://upsource.jetbrains.com/idea-ce/file/idea-ce-e97504227f5f68c58cd623c8f317a134b6d440b5/platform/core-api/src/com/intellij/openapi/components/ProjectComponent.java) interface is invoked to notify that a project has been loaded.
+
+The components are unloaded in the following order:
+
+- Saving configuration - the `writeExternal` method is invoked (if the component implements the [JDOMExternalizable](https://upsource.jetbrains.com/idea-ce/file/idea-ce-e97504227f5f68c58cd623c8f317a134b6d440b5/platform/util/src/com/intellij/openapi/util/JDOMExternalizable.java) interface), or the `getState` method is invoked (if the component implements PersistentStateComponent).
+- Disposal - the `disposeComponent` method is invoked.
+
+Note that you should not request any other components using the `getComponent()` method in the constructor of your component, otherwise you’ll get an assertion. If you need access to other components when initializing your component, you can specify them as constructor parameters or access them in the `initComponent` method.
+
+
+
+
+
+# Plugin Services
+
+A *service* is a plugin component loaded on demand when your plugin calls the `getService` method of the [ServiceManager](https://upsource.jetbrains.com/idea-ce/file/idea-ce-e97504227f5f68c58cd623c8f317a134b6d440b5/platform/core-api/src/com/intellij/openapi/components/ServiceManager.java) class.
+
+The *IntelliJ Platform* ensures tha**t only one instance of a service is loaded even though the service is called several times.** A service must have an implementation class which is used for service instantiation. A service may also have an interface class which is used to obtain the service instance and provides API of the service. The interface and implementation classes are specified in the `plugin.xml` file.
+
+The *IntelliJ Platform* offers three types of services: *application level* services, *project level* services and *module level* services.
+
+
+
+## How to Declare a Service?
+
+To declare a service, you can use the following extension points in the IntelliJ Platform:
+
+- `applicationService`: designed to declare an application level service.
+- `projectService`: designed to declare a project level service.
+- `moduleService`: designed to declare a module level service.
+
+**To declare a service:**
+
+1. In your project, open the context menu of the destination package and click *New* (or press Alt+Insert).
+2. In the *New* menu, choose *Plugin DevKit* and click *Application Service*, *Project Service* or *Module Service* depending on the type of service you need to use.
+3. In the dialog box that opens, you can specify service interface and implementation, or just a service class if you uncheck *Separate interface from implementation* check box.
+
+The IDE will generate new Java interface and class (or just a class if you unchecked *Separate interface from implementation* check box) and register the new service in `plugin.xml` file.
+
+Declaring a service via *New* context menu is available since version **2017.3**.
+
+To clarify the service declaration procedure, consider the following fragment of the `plugin.xml` file:
+
+<extensions defaultExtensionNs="com.intellij">
+  <!-- Declare the application level service -->
+  <applicationService serviceInterface="Mypackage.MyApplicationService" 
+                      serviceImplementation="Mypackage.MyApplicationServiceImpl" />
+
+  <!-- Declare the project level service -->
+  <projectService serviceInterface="Mypackage.MyProjectService" 
+                  serviceImplementation="Mypackage.MyProjectServiceImpl" />
+</extensions>
+
+If `serviceInterface` isn’t specified, it’s supposed to have the same value as `serviceImplementation`.
+
+
+
+## Retrieving a service
+
+To instantiate your service, in Java code, use the following syntax:
+
+```java
+MyApplicationService applicationService =ServiceManager.getService(MyApplicationService.class); 
+
+MyProjectService projectService = ServiceManager.getService(project,MyProjectService.class);  MyModuleService moduleService =ModuleServiceManager.getService(module,MyModuleService.class); 
+```
+
+
+
+### Sample Plugin
+
+This section allows you to download and install a sample plugin illustrating how to create and use a plugin service. This plugin has a project component implementing a service that counts the number of currently opened projects in the IDE. If this number exceeds the maximum allowed number of simultaneously opened projects, the plugin returns an error message and closes the most recently opened project.
+
+**To install and run the sample plugin**
+
+- Download the included sample plugin project located [here](https://github.com/JetBrains/intellij-sdk-docs/tree/master/code_samples/max_opened_projects).
+- Start *IntelliJ IDEA*, on the starting page, click *Open Project*, and then use the *Open Project* dialog box to open the project *max_opened_projects*.
+- On the main menu, choose *Run | Run* or press Shift+F10.
+- If necessary, change the [Run/Debug Configurations](https://www.jetbrains.com/help/idea/run-debug-configuration-plugin.html).
+
+
+
 
 
 ## SonarLint介绍
@@ -262,7 +447,16 @@ SonarLint is an IDE extension that helps you detect and fix quality issues as yo
         </component>
     </module-components>
 
-    <extensions defaultExtensionNs="com.intellij">
+   
+```
+
+#### 5. 扩展
+
+- 配置
+- 服务
+
+```xml
+ <extensions defaultExtensionNs="com.intellij">
         <codeInsight.linkHandler prefix="#sonarissue/" handlerClass="org.sonarlint.intellij.editor.SonarLinkHandler"/>
         <toolWindow id="SonarLint" anchor="bottom" icon="/images/ico-sonarlint-13.png" factoryClass="org.sonarlint.intellij.ui.SonarLintToolWindowFactory"/>
         <projectConfigurable order="AFTER SonarLintApp" displayName="SonarLint Project Settings" instance="org.sonarlint.intellij.config.project.SonarLintProjectConfigurable"
@@ -285,6 +479,158 @@ SonarLint is an IDE extension that helps you detect and fix quality issues as yo
 
 
 
+# Plugin Extensions and Extension Points
+
+The *IntelliJ Platform* **provides the concept of *extensions* and *extension points*** that <u>allows a plugin to interact with other plugins or with the IDE itself.</u>
+
+## Extension points
+
+**If you want your plugin to allow other plugins to extend its functionality, in the plugin, you must declare one or several *extension points*. Each extension point defines a class or an interface that is allowed to access this point.**
+
+## Extensions
+
+If you want your plugin to extend the functionality of other plugins or the *IntelliJ Platform*, you must declare one or several *extensions*.
+
+## How to declare extensions and extension points
+
+You can declare extensions and extension points in the plugin configuration file `plugin.xml`, within the `<extensions>` and `<extensionPoints>`sections, respectively.
+
+**To declare an extension point**
+
+In the `<extensionPoints>` section, insert a child element `<extensionPoint>` that **defines the extension point name and the name of a bean class or an interface that is allowed to extend the plugin functionality in the `name`, `beanClass` and `interface` attributes, respectively.**
+
+To clarify this procedure, consider the following sample section of the plugin.xml file:
+
+```xml
+<extensionPoints>   
+  <extensionPoint name="MyExtensionPoint1" beanClass="MyPlugin.MyBeanClass1"> 
+  <extensionPoint name="MyExtensionPoint2" interface="MyPlugin.MyInterface"> </extensionPoints> 
+```
+
+
+
+- The `interface` attribute **sets an interface the plugin that contributes to the extension point must implement**.
+- The `beanClass` attribute sets a bean class that specifies one or several properties annotated with the [@Attribute](https://upsource.jetbrains.com/idea-ce/file/idea-ce-e97504227f5f68c58cd623c8f317a134b6d440b5/platform/util/src/com/intellij/util/xmlb/annotations/Attribute.java) annotation.
+
+The plugin that contributes to the extension point will read those properties from the `plugin.xml` file.
+
+To clarify this, consider the following sample `MyBeanClass1` bean class used in the above `plugin.xml` file:
+
+```java
+public class MyBeanClass1 extends AbstractExtensionPointBean {   
+  @Attribute("key")   
+  public String key;    
+  @Attribute("implementationClass")   
+  public String implementationClass;    
+  public String getKey() 
+  {     
+    return key;   
+  }    
+  public String getClass() {
+    return implementationClass;   
+  } 
+}
+```
+
+To declare an extension designed to access the `MyExtensionPoint1` extension point, your `plugin.xml` file must contain the `<MyExtensionPoint1>`tag with the `key` and `implementationClass` attributes set to appropriate values (see sample below).
+
+**To declare an extension**
+
+Auto-completion is available for all these steps.
+
+1. For the
+
+   ```text
+   <extensions>
+   ```
+
+   element, set the
+
+   ```text
+   defaultExtensionNs
+   ```
+
+   attribute to one of the following values:
+
+   - `com.intellij`, if your plugin extends the IntelliJ Platform core functionality.
+   - `{ID of a plugin}`, if your plugin extends a functionality of another plugin.
+
+2. Add a new child element to the `<extensions>` element. The child element name must match the name of the extension point you want the extension to access.
+
+3. Depending on the type of the extension point, do one of the following:
+
+   - If the extension point was declared using the `interface` attribute, for newly added child element, set the `implementation` attribute to the name of the class that implements the specified interface.
+   - If the extension point was declared using the `beanClass` attribute, for newly added child element, set all attributes annotated with the [@Attribute](https://upsource.jetbrains.com/idea-ce/file/idea-ce-e97504227f5f68c58cd623c8f317a134b6d440b5/platform/util/src/com/intellij/util/xmlb/annotations/Attribute.java) annotations in the specified bean class.
+
+To clarify this procedure, consider the following sample section of the `plugin.xml` file that defines two extensions designed to access the `appStarter` and `applicationConfigurable` extension points in the *IntelliJ Platform* and one extension to access the `MyExtensionPoint1` extension point in a test plugin:
+
+
+
+```xml
+<!-- Declare extensions to access extension points in the IntelliJ Platform.
+     These extension points have been declared using the "interface" attribute.
+ -->
+  <extensions defaultExtensionNs="com.intellij">
+    <appStarter implementation="MyTestPackage.MyTestExtension1" />
+    <applicationConfigurable implementation="MyTestPackage.MyTestExtension2" />
+  </extensions>
+
+<!-- Declare extensions to access extension points in a custom plugin
+     The MyExtensionPoint1 extension point has been declared using *beanClass* attribute.
+-->
+  <extensions defaultExtensionNs="MyPluginID">
+     <MyExtensionPoint1 key="keyValue" implementationClass="MyTestPackage.MyClassImpl"></MyExtensionPoint1>
+  </extensions>
+```
+
+
+
+### Extension default properties
+
+The following properties are available always:
+
+- `id` - unique ID
+- `order` - allows to order all defined extensions using `first`, `last` or `before|after [id]` respectively
+- `os` - allows to restrict extension to given OS, e.g., `os="windows"` registers the extension on Windows only
+
+### Extension properties code insight
+
+Several tooling features are available to help configuring bean class extension points in `plugin.xml`.
+
+Property names matching the following list will resolve to FQN:
+
+- `implementation`
+- `className`
+- `serviceInterface` / `serviceImplementation`
+- ending with `Class` (case-sensitive)
+
+A required parent type can be specified in the extension point declaration via nested `<with>`:
+
+```xml
+<extensionPoint name="myExtension" beanClass="MyExtensionBean">   
+  <with attribute="psiElementClass" implements="com.intellij.psi.PsiElement"/> </extensionPoint> 
+```
+
+Property name `language` will automatically resolve to all present `Language` IDs.
+
+Specifying `@org.jetbrains.annotations.Nls` verifies capitalization of UI text properties according to given `capitalization` value (2019.2 and later).
+
+
+
+## How to get the extension points list?
+
+To get a list of extension points available in the *IntelliJ Platform* core, consult the `<extensionPoints>` section of the following XML configuration files:
+
+- [`LangExtensionPoints.xml`](https://upsource.jetbrains.com/idea-ce/file/idea-ce-e97504227f5f68c58cd623c8f317a134b6d440b5/platform/platform-resources/src/META-INF/LangExtensionPoints.xml)
+- [`PlatformExtensionPoints.xml`](https://upsource.jetbrains.com/idea-ce/file/idea-ce-e97504227f5f68c58cd623c8f317a134b6d440b5/platform/platform-resources/src/META-INF/PlatformExtensionPoints.xml)
+- [`VcsExtensionPoints.xml`](https://upsource.jetbrains.com/idea-ce/file/idea-ce-e97504227f5f68c58cd623c8f317a134b6d440b5/platform/platform-resources/src/META-INF/VcsExtensionPoints.xml)
+
+# Plugin Actions
+
+The *IntelliJ Platform* provides the concept of *actions*. An action is a class, derived from the [`AnAction`](https://upsource.jetbrains.com/idea-ce/file/idea-ce-e97504227f5f68c58cd623c8f317a134b6d440b5/platform/editor-ui-api/src/com/intellij/openapi/actionSystem/AnAction.java) class, whose `actionPerformed` method is called when the menu item or toolbar button is selected.
+
+The system of actions allows plugins to add their own items to IDEA menus and toolbars. Actions are organized into groups, which, in turn, can contain other groups. A group of actions can form a toolbar or a menu. Subgroups of the group can form submenus of a menu. You can find detailed information on how to create and register your actions in the [IntelliJ Platform Action System](http://www.jetbrains.org/intellij/sdk/docs/basics/action_system.html).
+
 
 
 ## 代码结构
@@ -296,3 +642,30 @@ SonarLint is an IDE extension that helps you detect and fix quality issues as yo
 - config：
   - global:全局配置，面板展示（qube绑定，规则设置）
   - project：项目文件、目录等exclude配置
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

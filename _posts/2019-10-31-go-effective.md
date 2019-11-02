@@ -143,7 +143,7 @@ var (
 )
 ```
 
-Grouping can also indicate relationships between items, such as the fact that a set of variables is protected by a mutex.
+**Grouping can also indicate relationships between items, such as the fact that a set of variables is protected by a mutex.**
 
 ```
 var (
