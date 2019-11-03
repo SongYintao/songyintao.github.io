@@ -1,7 +1,7 @@
 ---
 title: 容器概述
 subtitle: 当前各种容器概述分析、实现原理
-layoutL post
+layout: post
 tags: [container]
 ---
 
@@ -276,4 +276,3 @@ Docker按照用户的需求与指令，订制相应的Docker容器：
 - 用户通过指定运行的命令，使得Docker容器执行指定的工作。
 
 ![img](https://ask.qcloudimg.com/http-save/6436516/x5aj87zz9w.jpeg?imageView2/2/w/1620)
-
