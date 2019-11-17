@@ -211,6 +211,13 @@ SonarLint is an IDE extension that helps you detect and fix quality issues as yo
 #### 1. 应用组件
 
 - SonarLintGlobalSettings
+
+全局设置，至关重要，哪些rule需要设置、哪些不需要。
+
+规则配置找他就好。
+
+
+
 - SonarApplication
 - SonarLintAppUtils
 - SonarLintEngineManager
@@ -257,7 +264,13 @@ SonarLint is an IDE extension that helps you detect and fix quality issues as yo
 #### 2. 项目组件
 
 - SonarQubeEventNotifications
+
+SonarQube事件通知
+
 - SonarLintSubmitter
+
+submit Analysis job。分析相关的文件，回调显示。
+
 - AnalysisResultIssues
 - ProjectBindingManager
 - LiveIssueCache
@@ -266,13 +279,234 @@ SonarLint is an IDE extension that helps you detect and fix quality issues as yo
 - SonarLintProjectSettings
 - SonarLintProjectState
 - SonarLintJobManager
+
+分析Job管理器。生成SonarLintJob创建新的SonarLintTask进行工作。再根据task进行调度、执行。
+
+SonarLintTask：核心部分
+
+```java
+@Override
+public void run(ProgressIndicator indicator) {
+  AccumulatorIssueListener listener = new AccumulatorIssueListener();
+  sonarApplication.registerExternalAnnotator();
+
+  try {
+    checkCanceled(indicator, myProject);
+		//分析核心
+    List<AnalysisResults> results = analyze(myProject, indicator, listener);
+
+		//返回问题issues
+    List<Issue> issues = listener.getIssues();
+
+    //所有监测不通过的文件
+    List<ClientInputFile> allFailedAnalysisFiles = results.stream()
+      .flatMap(r -> r.failedAnalysisFiles().stream())
+      .collect(Collectors.toList());
+
+    processor.process(job, indicator, issues, allFailedAnalysisFiles);
+  } catch (CanceledException e1) {
+    console.info("Analysis canceled");
+  } catch (Throwable e) {
+    handleError(e, indicator);
+  } finally {
+    myProject.getMessageBus().syncPublisher(TaskListener.SONARLINT_TASK_TOPIC).ended(job);
+  }
+}
+
+
+
+
+private List<AnalysisResults> analyze(Project project, ProgressIndicator indicator, AccumulatorIssueListener listener) {
+    //核心组件SonarLint分析器
+    SonarLintAnalyzer analyzer = SonarLintUtils.get(project, SonarLintAnalyzer.class);
+
+    indicator.setIndeterminate(true);
+    int numModules = job.filesPerModule().keySet().size();
+    String suffix = "";
+    if (numModules > 1) {
+      suffix = String.format(" in %d modules", numModules);
+    }
+
+    int numFiles = job.allFiles().size();
+    if (numFiles > 1) {
+      indicator.setText("Running SonarLint Analysis for " + numFiles + " files" + suffix);
+    } else {
+      indicator.setText("Running SonarLint Analysis for '" + getFileName(job.allFiles().iterator().next()) + "'");
+    }
+
+    LOGGER.info(indicator.getText());
+
+    ProgressMonitor progressMonitor = new TaskProgressMonitor(indicator);
+    List<AnalysisResults> results = new LinkedList<>();
+
+    for (Map.Entry<Module, Collection<VirtualFile>> e : job.filesPerModule().entrySet()) {
+      //核心部分，分析模块里面的文件
+      results.add(analyzer.analyzeModule(e.getKey(), e.getValue(), listener, progressMonitor));
+      checkCanceled(indicator, myProject);
+    }
+    indicator.startNonCancelableSection();
+    return results;
+  }
+```
+
+
+
 - IssueMatcher
 - IssueProcessor
 - SonarLintAnalyzer
+
+核心的分析组件，主要分析工作靠它。
+
+```java
+//主要的核心代码逻辑
+public AnalysisResults analyzeModule(Module module, Collection<VirtualFile> filesToAnalyze, IssueListener listener, ProgressMonitor progressMonitor) {
+  // Configure plugin properties. Nothing might be done if there is no configurator available for the extensions loaded in runtime.
+  long start = System.currentTimeMillis();
+  
+  Map<String, String> pluginProps = new HashMap<>();
+  //分析配置扩展点获取
+  AnalysisConfigurator[] analysisConfigurators = AnalysisConfigurator.EP_NAME.getExtensions();
+  
+  if (analysisConfigurators.length > 0) {
+    for (AnalysisConfigurator config : analysisConfigurators) {
+      console.debug("Configuring analysis with " + config.getClass().getName());
+      pluginProps.putAll(config.configure(module));
+    }
+  } else {
+    console.info("No analysis configurator found");
+  }
+
+  // configure files
+  VirtualFileTestPredicate testPredicate = SonarLintUtils.get(module, VirtualFileTestPredicate.class);
+  List<ClientInputFile> inputFiles = getInputFiles(module, testPredicate, filesToAnalyze);
+
+  // Analyze
+
+  try {
+    SonarLintFacade facade = projectBindingManager.getFacade(true);
+
+    String what;
+    if (filesToAnalyze.size() == 1) {
+      what = "'" + filesToAnalyze.iterator().next().getName() + "'";
+    } else {
+      what = filesToAnalyze.size() + " files";
+    }
+
+    console.info("Analysing " + what + "...");
+    AnalysisResults result = facade.startAnalysis(inputFiles, listener, pluginProps, progressMonitor);
+    console.debug("Done in " + (System.currentTimeMillis() - start) + "ms\n");
+    if (result.languagePerFile().size() == 1 && result.failedAnalysisFiles().isEmpty()) {
+      telemetry.analysisDoneOnSingleFile(result.languagePerFile().values().iterator().next(), (int) (System.currentTimeMillis() - start));
+    } else {
+      telemetry.analysisDoneOnMultipleFiles();
+    }
+    return result;
+  } catch (InvalidBindingException e) {
+    // should not happen, as analysis should not have been submitted in this case.
+    throw new IllegalStateException(e);
+  }
+}
+```
+
+**SonarLintFacade**抽象类：封装了分析的细节
+
+
+
+```java
+  public synchronized AnalysisResults startAnalysis(List<ClientInputFile> inputFiles, IssueListener issueListener,
+    Map<String, String> additionalProps, ProgressMonitor progressMonitor) {
+    Path baseDir = Paths.get(project.getBasePath());
+    Path workDir = baseDir.resolve(Project.DIRECTORY_STORE_FOLDER).resolve("sonarlint").toAbsolutePath();
+    Map<String, String> props = new HashMap<>();
+    props.putAll(additionalProps);
+    props.putAll(projectSettings.getAdditionalProperties());
+    return analyze(baseDir, workDir, inputFiles, props, issueListener, progressMonitor);
+  }
+
+//Standalone 实现
+
+  private final StandaloneSonarLintEngine sonarlint;
+@Override
+  protected AnalysisResults analyze(Path baseDir, Path workDir, Collection<ClientInputFile> inputFiles, Map<String, String> props,
+    IssueListener issueListener, ProgressMonitor progressMonitor) {
+    
+    //重要：获取需要分析的规则、跳过的规则
+    List<RuleKey> excluded = globalSettings.getExcludedRules().stream().map(RuleKey::parse).collect(Collectors.toList());
+    List<RuleKey> included = globalSettings.getIncludedRules().stream().map(RuleKey::parse).collect(Collectors.toList());
+
+    StandaloneAnalysisConfiguration config = StandaloneAnalysisConfiguration.builder()
+      .setBaseDir(baseDir)
+      .addInputFiles(inputFiles)
+      .putAllExtraProperties(props)
+      .addExcludedRules(excluded)
+      .addIncludedRules(included)
+      .build();
+    console.debug("Starting analysis with configuration:\n" + config.toString());
+    
+    //最终通过实现的SonarLint引擎进行具体的分析
+    return sonarlint.analyze(config, issueListener, new ProjectLogOutput(console, projectSettings), progressMonitor);
+  }
+
+
+```
+
+StandaloneSonarLintEngine：
+
+
+
+```java
+  @Override
+  public AnalysisResults analyze(StandaloneAnalysisConfiguration configuration, IssueListener issueListener, @Nullable LogOutput logOutput, @Nullable ProgressMonitor monitor) {
+    requireNonNull(configuration);
+    requireNonNull(issueListener);
+    setLogging(logOutput);
+    rwl.readLock().lock();
+    try {
+      //实际的内核是调用：sonarlint-core jar里面方法
+      return globalContainer.analyze(configuration, issueListener, new ProgressWrapper(monitor));
+    } catch (RuntimeException e) {
+      throw SonarLintWrappedException.wrap(e);
+    } finally {
+      rwl.readLock().unlock();
+    }
+  }
+
+```
+
+
+
+**sonarlint-core**：StandaloneGlobalContainer
+
+```java
+  public AnalysisResults analyze(StandaloneAnalysisConfiguration configuration, IssueListener issueListener, ProgressWrapper progress) {
+    AnalysisContainer analysisContainer = new AnalysisContainer(globalExtensionContainer, progress);
+    analysisContainer.add(configuration);
+    analysisContainer.add(issueListener);
+    analysisContainer.add(rules);
+    // TODO configuration should be set directly with Strings
+    Set<String> excludedRules = configuration.excludedRules().stream().map(RuleKey::toString).collect(Collectors.toSet());
+    Set<String> includedRules = configuration.includedRules().stream()
+      .map(RuleKey::toString)
+      .filter(r -> !excludedRules.contains(r))
+      .collect(Collectors.toSet());
+    analysisContainer.add(standaloneActiveRules.filtered(excludedRules, includedRules));
+    analysisContainer.add(SensorsExecutor.class);
+    DefaultAnalysisResult defaultAnalysisResult = new DefaultAnalysisResult();
+    analysisContainer.add(defaultAnalysisResult);
+    analysisContainer.execute();
+    return defaultAnalysisResult;
+  }
+```
+
+
+
 - SonarLintProjectNotifications
 - ServerIssueUpdater
 - UpdateChecker
 - SonarLintTaskFactory
+
+根据SonarLintJob创建相关的SonarLintTask
+
 - LocalFileExclusions
 
 ```xml

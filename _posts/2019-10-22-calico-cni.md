@@ -13,9 +13,25 @@ Calico Cni code learning
 
 
 
+#### 1. 开源标准
+
+[CNI标准](https://github.com/containernetworking/cni)
+
+[plugins](https://github.com/containernetworking/plugins)
+
 
 
 ### 如何自定义CNI
+
+
+
+
+
+
+
+### k8s 启动pod分配ip流程
+
+
 
 
 

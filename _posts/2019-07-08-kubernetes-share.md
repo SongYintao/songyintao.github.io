@@ -252,7 +252,7 @@ cgroup.procs      cpu.cfs_quota_us  cpu.rt_runtime_us cpu.stat  tasks
 
 而这样的配置文件又如何使用呢？ 你需要在对应的子系统下面创建一个目录，比如，我们现在进入 /sys/fs/cgroup/cpu 目录下：
 
-```
+```shell
 root@ubuntu:/sys/fs/cgroup/cpu$ mkdir container
 root@ubuntu:/sys/fs/cgroup/cpu$ ls container/
 cgroup.clone_children cpu.cfs_period_us cpu.rt_period_us  cpu.shares notify_on_release
@@ -262,7 +262,7 @@ cgroup.procs      cpu.cfs_quota_us  cpu.rt_runtime_us cpu.stat  tasks
 
 这个目录就称为一个“控制组”。你会发现，操作系统会在你新创建的 container 目录下，自动生成该子系统对应的资源限制文件。 现在，我们在后台执行这样一条脚本：
 
-```
+```shell
 while : ; do : ; done &
 [1] 226
 
@@ -282,13 +282,13 @@ $ cat /sys/fs/cgroup/cpu/container/cpu.cfs_period_us
 
 接下来，我们可以通过修改这些文件的内容来设置限制。 比如，向 container 组里的 cfs_quota 文件写入 20 ms（20000 us）：
 
-```
+```shell
 echo 20000 > /sys/fs/cgroup/cpu/container/cpu.cfs_quota_us
 ```
 
 结合前面的介绍，你应该能明白这个操作的含义，它意味着在每 100 ms 的时间里，被该控制组限制的进程只能使用 20 ms 的 CPU 时间，也就是说这个进程只能使用到 20% 的 CPU 带宽。 接下来，我们把被限制的进程的 PID 写入 container 组里的 tasks 文件，上面的设置就会对该进程生效了：
 
-```
+```shell
 echo 226 > /sys/fs/cgroup/cpu/container/tasks 
 
 ```

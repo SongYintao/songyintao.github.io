@@ -1,5 +1,6 @@
 ---
 title: 声明式API原理
+subtitle: 声明式API的设计、特点，以及使用方式
 layout: post
 tags: [kubernetes,api]
 ---
@@ -7,8 +8,6 @@ tags: [kubernetes,api]
 声明式API的设计、特点，以及使用方式。
 
 主要讲述声明式API的工作原理，以及如何利用这套API机制，在Kubernetes里添加自定义的API对象。
-
-
 
 一个API对象在etcd里面的完整资源路径，由：Group（API组）、Version(API版本)、Resource（API资源类型）三个部分组成。
 
@@ -20,8 +19,6 @@ kind: CronJob
 ```
 
 CronJob表示Api资源。提交这个Yaml文件之后，转化为资源对象。
-
-
 
 Kubernetes是如何对Resource、Group和Version进行解析，从而在Kubernetes项目里面找到CronJob对象的定义？
 
@@ -36,8 +33,6 @@ Kubernetes是如何对Resource、Group和Version进行解析，从而在Kubernet
 **最后，Kubernets会匹配API对象的资源类型。**
 
 ![](../img/kubernetes-1.png)
-
-
 
 
 
@@ -65,7 +60,7 @@ Kubernetes是如何对Resource、Group和Version进行解析，从而在Kubernet
 
 这才是Network 这个API对象所关注的"业务逻辑"。
 
-"声明式API"并不像"命令式API"那样有明显的执行逻辑。
+"**声明式API**"并不像"**命令式API**"那样有明显的执行逻辑。
 
 总的来说，编写自定义控制器代码的过程包括：**编写main函数**、**编写自定义控制器的定义**，以及**编写控制器里的业务逻辑**三个部分。
 
@@ -100,11 +95,11 @@ func main() {
 
 这个main函数主要通过三步完成了初始化并启动一个自定义控制器的工作。
 
-**第一步**：main 函数根据提供的Mater配置（APIServer的地址端口和kubeconfig的路径），创建一个kubernetes的client（kubeClient）和Network对象的client（networkClient）。
+**第一步**：main 函数根据提供的Mater配置（`APIServer`的地址端口和`kubeconfig`的路径），创建一个`kubernete`s的`client（kubeClient）`和`Network`对象的`client（networkClient）`。
 
-**第二步**：main函数<u>为Network对象创建一个叫作InformerFactory的工厂</u>，并使用它生成一个Network对象的Informer，传递给控制器。
+**第二步**：main函数<u>为Network对象创建一个叫作`InformerFactory`的工厂</u>，并使用它生成一个Network对象的Informer，传递给控制器。
 
-**第三步**：main函数启动上述的informer，然后执行controller.Run，启动自定义控制器。
+**第三步**：main函数启动上述的`informer`，然后执行`controller.Run`，启动自定义控制器。
 
 
 
