@@ -42,7 +42,7 @@ Linux Container提供了在单一可控主机节点上支持多个相互隔离�
 
 ### **2、LXC与docker什么关系？**
 
-docker并不是LXC替代品，docker底层使用了LXC来实现，LXC将linux进程沙盒化，使得进程之间相互隔离，并且能够课哦内阁制各进程的资源分配。
+docker并不是LXC替代品，docker底层使用了LXC来实现，LXC将linux进程沙盒化，使得进程之间相互隔离，并且能够控制各进程的资源分配。
 
 在LXC的基础之上，docker提供了一系列更强大的功能。
 
@@ -125,12 +125,12 @@ cgroup的特点是：　
 
 ![img](https://ask.qcloudimg.com/http-save/6436516/zqpeh7v3tz.jpeg?imageView2/2/w/1620)
 
-- distribution 负责与docker registry交互，上传洗澡镜像以及v2 registry 有关的源数据
-- registry负责docker registry有关的身份认证、镜像查找、镜像验证以及管理registry mirror等交互操作
-- image 负责与镜像源数据有关的存储、查找，镜像层的索引、查找以及镜像tar包有关的导入、导出操作
-- reference负责存储本地所有镜像的repository和tag名，并维护与镜像id之间的映射关系
-- layer模块负责与镜像层和容器层源数据有关的增删改查，并负责将镜像层的增删改查映射到实际存储镜像层文件的graphdriver模块
-- graghdriver是所有与容器镜像相关操作的执行者
+- **distribution** 负责与docker registry交互，上传镜像以及v2 registry 有关的源数据
+- **registry**负责docker registry有关的身份认证、镜像查找、镜像验证以及管理registry mirror等交互操作
+- **image** 负责与镜像源数据有关的存储、查找，镜像层的索引、查找以及镜像tar包有关的导入、导出操作
+- **reference**负责存储本地所有镜像的repository和tag名，并维护与镜像id之间的映射关系
+- **layer**模块负责与镜像层和容器层源数据有关的增删改查，并负责将镜像层的增删改查映射到**实际存储镜像层文件的graphdriver模块**
+- **graghdriver**是所有与容器镜像相关操作的执行者
 
 ###  2、docker架构2
 

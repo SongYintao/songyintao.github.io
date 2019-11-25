@@ -113,3 +113,6 @@ tc filter add dev ifb0 parent 1: protocol ip prio 5 u32 ht 4:9: match ip dst "19
 - [ifb wiki](https://wiki.linuxfoundation.org/networking/ifb)
 - [Linux TC (Traffic Control) 框架原理解析](http://blog.csdn.net/dog250/article/details/40483627)
 - [Linux TC的ifb原理以及ingress流控](http://blog.csdn.net/dog250/article/details/40680765)
+
+
+
