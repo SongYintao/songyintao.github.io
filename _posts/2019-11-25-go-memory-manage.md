@@ -273,18 +273,18 @@ So here is how it works for small objects:
 
 **If the free list is empty:**
 
-1. We fetch a bunch of objects from a central free list for this size-class (the central free list is shared by all threads).
+1. We fetch a bunch of objects from a **central free list** for this size-class (the **central free list** is **shared by all threads**).
 2. Place them in the thread-local free list.
 3. Return one of the newly fetched objects to the applications.
 
 **If the central free list is also empty:**
 
-1. We allocate a run of pages from the central page allocator.
-2. Split the run into a set of objects of this size-class.
+1. We **allocate a run of pages from the central page allocator**.
+2. Split the **run** into a set of objects of **this size-class.**
 3. Place the new objects on the central free list.
 4. As before, move some of these objects to the thread-local free list.
 
-Large Objects (*size > 32K*) is rounded up to a page size (*4K*) and is handled by a central page heap. The central page heap is again an array of free lists:
+Large Objects (*size > 32K*) is rounded up to a page size (*4K*) and is handled by a **central page heap**. The **central page heap** is again an array of free lists:
 
 ![img](https://povilasv.me/wp-content/uploads/2018/06/tcmalloc_lib3.png)
 
@@ -300,11 +300,11 @@ So here is how it works for large objects:
 4. If that fails, we fetch memory from the system.
 5. If an allocation for *k* pages is satisfied by a run of pages of length > *k*, the remainder of the run is re-inserted back into the appropriate free list in the page heap.
 
-The memory is managed in term of runs of contiguous pages, which are called **Spans** (this is important as Go also manages memory in terms of Spans).
+The **memory is managed in term of runs of contiguous pages**, which are called **Spans** (this is important as Go also manages memory in terms of Spans).
 
 In TCMalloc a span can either be **allocated**, or **free**:
 
-- If free, the span is one of the entries in a page heap linked-list.
+- If free, **the span is one of the entries in a page heap linked-list**.
 - If allocated, it is either a large object that has been handed off to the application, or a run of pages that have been split up into a sequence of small objects.
 
 ![img](https://povilasv.me/wp-content/uploads/2018/06/span.png)
@@ -313,13 +313,15 @@ In this example, *span 1* occupies 2 pages, *span 2* occupies 4 pages, *span 3*o
 
 # Go Memory Allocator
 
-Go allocator is similiar to TCMalloc, it works in runs of pages (spans / `mspan`objects), uses thread-local cache and divides allocations based on size. **Spans**are contiguous regions of memory of **8K** or larger. You can see Span for yourself in in `runtime/mheap.go` there is [mspan](https://github.com/golang/go/blob/master/src/runtime/mheap.go#L252) struct. There are 3 types of Spans:
+Go allocator is similiar to `TCMalloc`, it works in runs of pages (spans / `mspan`objects), uses **thread-local cache** and **divides allocations based on size**. **Spans** are contiguous regions of memory of **8K** or larger. You can see Span for yourself in in `runtime/mheap.go` there is [mspan](https://github.com/golang/go/blob/master/src/runtime/mheap.go#L252) struct. There are 3 types of Spans:
 
-1. **idle** – span, that has no objects and can be released back to the OS, or reused for heap allocation, or reused for stack memory.
-2. **in use** – span, that has atleast one heap object and may have space for more.
-3. **stack** – span, which is used for goroutine stack. This span can live either in stack or in heap, but not in both.
+1. **idle** – span, that <u>has no objects and can be released back to the OS, or reused for heap allocation, or reused for stack memory</u>.
+2. **in use** – span, that <u>has atleast one heap object and may have space for more</u>.
+3. **stack** – span, <u>which is used for goroutine stack</u>. This span can live either in stack or in heap, but not in both.
 
-When allocation happens we map objects into 3 size classes: **Tiny** class for objects *<16* bytes, **Small** class for objects up to **32** kB and **Large** class for other objects. Small allocation sizes are rounded to one of about **70** size classes, each of which has its own free set of objects of exactly that size. I found some interesting comments in `runtime/malloc.go` about Tiny allocator, and why it was introduced: > The main targets of tiny allocator are small strings and standalone escaping variables.
+When allocation happens we map objects into 3 size classes: **Tiny** class for objects *<16* bytes, **Small** class for objects up to **32** kB and **Large** class for other objects. 
+
+Small allocation sizes are rounded to **one of about 70 size classes**, each of which **has its own free set of objects of exactly that size**. I found some interesting comments in `runtime/malloc.go` about Tiny allocator, and why it was introduced: > **The main targets of tiny allocator are small strings and standalone escaping variables.**
 
 > On a json benchmark the allocator reduces number of allocations by ~12% and reduces heap size by ~20%.
 > Tiny allocator combines several tiny allocation requests into a single memory block of 16 bytes.
@@ -330,13 +332,13 @@ So here is how it works for Tiny objects:
 
 **When allocating Tiny object:**
 
-1. Look in to corresponding **tiny** slot object in this P’s **mcache**.
+1. Look in to corresponding **tiny** slot object in this **P**’s **mcache**.
 2. Round the size of existing subobject (if exists) into 8, 4 or 2 bytes based on the new object’s size.
 3. If the object fits together with existing subobjects, place it there.
 
 **If it doesn’t fit in the tiny block**:
 
-1. Look in the corresponding **mspan** in this P’s **mcache**.
+1. Look in the corresponding **mspan** in this **P**’s **mcache**.
 2. Obtain a new **mspan** from **mcache**.
 3. Scan the **mspan**‘s free bitmap to find a free slot.
 4. If there is a free slot, allocate it and use it as a new **tiny** slot object. (This can all be done without acquiring a lock.)
@@ -359,14 +361,14 @@ For Small objects it’s very similiar, but we skip the first part:
 
 **When allocating small object:**
 
-1. Round the size up to one of the small size classes.
-2. Look in the corresponding **mspan** in this P’s **mcache**.
+1. Round the size up to **one of the small size classes**.
+2. Look in the corresponding **mspan** in this **P**’s **mcache**.
 3. Scan the **mspan**‘s free bitmap to find a free slot.
 4. If there is a free slot, allocate it. (This can all be done without acquiring a lock.)
 
 **If the mspan has no free slots:**
 
-1. Obtain a new **mspan** from the **mcentral**‘s list of mspans of the required size class that have free space.
+1. Obtain a new **mspan** from the **mcentral**‘s <u>list of mspans</u> of the required size class that have free space. 
 2. Obtaining a whole span amortizes the cost of locking the **mcentral**.
 
 **If the mspan’s list is empty:**
@@ -375,10 +377,10 @@ For Small objects it’s very similiar, but we skip the first part:
 
 **If the mheap is empty or has no page runs large enough**:
 
-1. Allocate a new group of pages (at least 1MB) from the **OS**.
+1. Allocate a new group of pages (**at least 1MB**) from the **OS**.
 2. Allocating a large run of pages amortizes the cost of talking to the **OS**.
 
-Allocating and freeing a large object uses the **mheap** directly, bypassing the **mcache** and **mcentral**. **mheap** is managed like in TCMalloc, where we have an array of free lists. Large objects are rounded up to page size (*8K*) and we look for *k*th entry in a free list, which consists of *k* pages, if it’s empty we go down. Rinse and repeat, until the *128* array entry. If we don’t find empty page in *127*, we look for a span in leftover large pages (`mspan.freelarge` field) and if that fails we take from OS.
+Allocating and freeing a large object uses the **mheap** directly, bypassing(越过) the **mcache** and **mcentral**. **mheap** is managed like in TCMalloc, where we have an array of free lists. Large objects are rounded up to page size (*8K*) and we look for *k*th entry in a free list, which consists of *k* pages, if it’s empty we go down. Rinse and repeat, until the *128* array entry. If we don’t find empty page in *127*, we look for a span in leftover large pages (`mspan.freelarge` field) and if that fails we take from OS.
 
 So that’s all about Go Memory allocation, after digging thru this code [runtime.MemStats](https://golang.org/pkg/runtime/#MemStats) makes way more sense to me. You can see all the reporting for size classes, you can view how many bytes object’s that implement memory management (like `MCache`, `MSpan`) take, etc. You can read more about memstats in [exploring Prometheus Go metrics](https://povilasv.me/prometheus-go-metrics/).
 
@@ -401,7 +403,7 @@ USER PID %CPU %MEM VSZ RSS TTY STAT START TIME COMMAND
 povilasv 16609 0.0 0.0 388496 5236 pts/9 Sl+ 17:21 0:00 ./main
 ```
 
-Which gives us ~380 MiB of virtual memory size.
+**Which gives us ~380 MiB of virtual memory size.**
 
 ## So maybe it’s runtime?
 
@@ -596,14 +598,14 @@ Thank you for reading this. As always I look forward to your comments. And pleas
 
 
 
-1. Actually saying that each memory slot holds 8 bits is not really true, as there are architectures, where you can store less or more than 8 bits, you can read more in https://www.reddit.com/r/askscience/comments/3b6lkz/why_is_it_that_the_de_facto_standard_for_the/ and in https://softwareengineering.stackexchange.com/questions/91230/addressable-memory-unit#91263 [![↩](https://s.w.org/images/core/emoji/12.0.0-1/svg/21a9.svg)](https://povilasv.me/go-memory-management/#fnref-1784-1)
-2. Actually there is a concept called shared memory, so that multiple applications can access the same memory. Read more in http://www.csl.mtu.edu/cs4411.ck/www/NOTES/process/shm/what-is-shm.html [![↩](https://s.w.org/images/core/emoji/12.0.0-1/svg/21a9.svg)](https://povilasv.me/go-memory-management/#fnref-1784-2)
-3. https://littleosbook.github.io/#a-short-introduction-to-virtual-memory and https://en.wikipedia.org/wiki/Virtual_memory [![↩](https://s.w.org/images/core/emoji/12.0.0-1/svg/21a9.svg)](https://povilasv.me/go-memory-management/#fnref-1784-3)
-4. You can read more about it in https://en.wikipedia.org/wiki/Memory_management_unit and https://wiki.osdev.org/Paging [![↩](https://s.w.org/images/core/emoji/12.0.0-1/svg/21a9.svg)](https://povilasv.me/go-memory-management/#fnref-1784-4)
-5. Libc man pages are a really great read: http://www.gnu.org/software/libc/manual/html_node/Memory.html [![↩](https://s.w.org/images/core/emoji/12.0.0-1/svg/21a9.svg)](https://povilasv.me/go-memory-management/#fnref-1784-5)
-6. The steps are for Linux, taken from https://en.wikipedia.org/wiki/Loader_(computing) [![↩](https://s.w.org/images/core/emoji/12.0.0-1/svg/21a9.svg)](https://povilasv.me/go-memory-management/#fnref-1784-6)
-7. You can read more about executable files in: https://en.wikipedia.org/wiki/Portable_Executable, https://wiki.osdev.org/ELF_Tutorial, https://www.quora.com/Where-does-elf-file-sits-inside-a-microcontroller [![↩](https://s.w.org/images/core/emoji/12.0.0-1/svg/21a9.svg)](https://povilasv.me/go-memory-management/#fnref-1784-7)
-8. You can verify that your program is in ELF, by opening the binary in text editor and seeing text `ELF` string in the beginning [![↩](https://s.w.org/images/core/emoji/12.0.0-1/svg/21a9.svg)](https://povilasv.me/go-memory-management/#fnref-1784-8)
-9. https://www.gnu.org/software/libc/manual/html_node/Memory-Concepts.html#Memory-Concepts [![↩](https://s.w.org/images/core/emoji/12.0.0-1/svg/21a9.svg)](https://povilasv.me/go-memory-management/#fnref-1784-9)
-10. Function definitions are in https://github.com/golang/go/blob/master/src/runtime/mem_linux.go and assembly in https://github.com/golang/go/blob/master/src/runtime/sys_linux_amd64.s#L449. There is really cool post about a bug, which happened because Go does not use libc wrappers: https://marcan.st/2017/12/debugging-an-evil-go-runtime-bug/. [![↩](https://s.w.org/images/core/emoji/12.0.0-1/svg/21a9.svg)](https://povilasv.me/go-memory-management/#fnref-1784-10)
-11. Read about tcmalloc design in http://goog-perftools.sourceforge.net/doc/tcmalloc.html [![↩](https://s.w.org/images/core/emoji/12.0.0-1/svg/21a9.svg)](https://povilasv.me/go-memory-management/#fnref-1784-11)
+1. Actually saying that each memory slot holds 8 bits is not really true, as there are architectures, where you can store less or more than 8 bits, you can read more in https://www.reddit.com/r/askscience/comments/3b6lkz/why_is_it_that_the_de_facto_standard_for_the/ and in https://softwareengineering.stackexchange.com/questions/91230/addressable-memory-unit#91263 
+2. Actually there is a concept called shared memory, so that multiple applications can access the same memory. Read more in http://www.csl.mtu.edu/cs4411.ck/www/NOTES/process/shm/what-is-shm.html 
+3. https://littleosbook.github.io/#a-short-introduction-to-virtual-memory and https://en.wikipedia.org/wiki/Virtual_memory
+4. You can read more about it in https://en.wikipedia.org/wiki/Memory_management_unit and https://wiki.osdev.org/Paging 
+5. Libc man pages are a really great read: http://www.gnu.org/software/libc/manual/html_node/Memory.html
+6. The steps are for Linux, taken from https://en.wikipedia.org/wiki/Loader_(computing) 
+7. You can read more about executable files in: https://en.wikipedia.org/wiki/Portable_Executable, https://wiki.osdev.org/ELF_Tutorial, https://www.quora.com/Where-does-elf-file-sits-inside-a-microcontroller 
+8. You can verify that your program is in ELF, by opening the binary in text editor and seeing text `ELF` string in the beginning
+9. https://www.gnu.org/software/libc/manual/html_node/Memory-Concepts.html#Memory-Concepts 
+10. Function definitions are in https://github.com/golang/go/blob/master/src/runtime/mem_linux.go and assembly in https://github.com/golang/go/blob/master/src/runtime/sys_linux_amd64.s#L449. There is really cool post about a bug, which happened because Go does not use libc wrappers: https://marcan.st/2017/12/debugging-an-evil-go-runtime-bug/.
+11. Read about tcmalloc design in http://goog-perftools.sourceforge.net/doc/tcmalloc.html 
