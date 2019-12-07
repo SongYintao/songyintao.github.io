@@ -221,29 +221,25 @@ func netpollopen(fd uintptr, pd *pollDesc) int32 {var ev epollevent    ev.events
 
 在1.10以前go的堆地址空间是线性连续扩展的, 比如在1.10(linux amd64)中, 最大可扩展到512GB. 
 
-
-
 因为go在gc的时候会根据拿到的指针地址来判断是否位于go的heap的, 以及找到其对应的span, 其判断机制需要gc heap是连续的. 
 
 但是连续扩展有个问题, cgo中的代码(尤其是32位系统上)可能会占用未来会用于go heap的内存. 这样在扩展go heap时, mmap出现不连续的地址, 导致运行时throw. 
 
+**在1.11中, 改用了稀疏索引的方式来管理整体的内存. 可以超过512G内存, 也可以允许内存空间扩展时不连续.** 
 
+**在全局的mheap struct中有个arenas二阶数组**, 在linux amd64上,一阶只有一个slot, 二阶有4M个slot, 每个slot指向一个heapArena结构, 每个heapArena结构可以管理64M内存, 所以在新的版本中, go可以管理4M*64M=256TB内存, 即目前64位机器中48bit的寻址总线全部256TB内存.
 
-在1.11中, 改用了稀疏索引的方式来管理整体的内存. 可以超过512G内存, 也可以允许内存空间扩展时不连续. 
-
-在全局的mheap struct中有个arenas二阶数组, 在linux amd64上,一阶只有一个slot, 二阶有4M个slot, 每个slot指向一个heapArena结构, 每个heapArena结构可以管理64M内存, 所以在新的版本中, go可以管理4M*64M=256TB内存, 即目前64位机器中48bit的寻址总线全部256TB内存.
-
-**span机制**
-
-
+###  **span机制**
 
 ![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesOYR1U9Oplj9CNqvTTEkWFRSpxhrJneQr7ozVKfYwzXVW9ISdcQM3Ew/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
 
-前面提到了go的内存分配类似于tcmalloc, 采用了span机制来减少内存碎片. 
+前面提到了**go的内存分配类似于tcmalloc**, **采用了span机制来减少内存碎片**. 
 
-每个span管理8KB整数倍的内存, 用于分配一定范围的内存需求.
+**每个span管理8KB整数倍的内存, 用于分配一定范围的内存需求.**
 
-**内存分配全景**
+
+
+### **内存分配全景**
 
 
 
@@ -251,27 +247,27 @@ func netpollopen(fd uintptr, pd *pollDesc) int32 {var ev epollevent    ev.events
 
 多层次的分配Cache, 每个P上有一个mcache, mcache会为每个size最多缓存一个span, 用于无锁分配. 
 
-全局每个size的span都有一个mcentral, 锁的粒度相对于全局的heap小很多, 每个mcentral可以看成是每个size的span的一个全局后备cache. 
+**全局每个size的span都有一个mcentral, 锁的粒度相对于全局的heap小很多, 每个mcentral可以看成是每个size的span的一个全局后备cache.** 
 
-在gc完成后, 会把P中的span都flush到mcentral中, 用于清扫后再分配. P有需要span时, 从对应size的mcentral获取. 获取不到再上升到全局的heap.
+在**gc完成后, 会把P中的span都flush到mcentral中, 用于清扫后再分配**. P有需要span时, 从对应size的mcentral获取. 获取不到再上升到全局的heap.
+
+
 
 **几种特殊的分配器**
 
 ![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesm9naeSuPVDTpHUZuMPLdAD0u7r6huBg2xLNPIDw96kJbv0fm82IicGA/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
 
-对于很小的对象分配, go做了个优化, 把小对象合并, 以移动指针的方式分配. 
+- 对于很小的对象分配, go做了个优化, 把小对象合并, 以移动指针的方式分配. 
 
-
-
-对于栈内存有stackcache分配, 也有多个层次的分配, 同时stack也有多个不同size. 
+- 对于栈内存有stackcache分配, 也有多个层次的分配, 同时stack也有多个不同size. 
 
 用于分配stack的内存也是位于go gc heap, 用mspan管理, 不过这个span的状态和用于分配对象的mspan状态不太一样, 为mSpanManual. 
-
-
 
 我们可以思考一个问题, go的对象是分配在go gc heap中, 并由mcache, mspan, mcentral这些结构管理, 那么mcache, mspan, mcentral这些结构又是哪里管理和分配的呢? 
 
 肯定不是自己管理自己. 这些都是由特殊的分配fixalloc分配的, 每种类型有一个fixalloc, 大致原理就是通过mmap从进程空间获取一小块内存(百KB的样子), 然后用来分配这个固定大小的结构.
+
+
 
 **内存分配综合**
 
@@ -305,7 +301,7 @@ GC并不是个新事物, 使得GC大放光彩的是Java语言.
 
 整体来说golang gc用起来是很舒心的, 几乎不用你关心.
 
-**三色标记**
+### **三色标记**
 
 ![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesWshDIJ8xiatpmZUSVYlIb3I2xdcpvgqFT9WoAZBCVSic4JDgpVRSVXjQ/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
 
@@ -315,13 +311,13 @@ go采用的是并发三色标记清除法.
 
 有几个问题可以思考一下: 
 
-并发情况下, 会不会漏标记对象? 
+- 并发情况下, 会不会漏标记对象? 
 
-对象的三色状态存放在哪? 
+- 对象的三色状态存放在哪? 
 
-如何根据一个对象来找到它引用的对象?
+- 如何根据一个对象来找到它引用的对象?
 
-**写屏障**
+### **写屏障**
 
 ![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesL9ib2XxJwtY6PudAmDuMaVIicpsFdOsCzIPapjl6k0D8D8PjRM3FfgSg/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
 
@@ -335,7 +331,9 @@ GC最基本的就是正确性: 不漏标记对象, 程序还在用的对象都�
 
 第4步, GC继续标记, 扫描B, 此时B没有引用对象, 变成了黑色对象. 我们会发现C对象被漏标记了.
 
-如何解决这个问题? go使用了写屏障, 这里的写屏障是指由编译器生成的一小段代码. 在gc时对指针操作前执行的一小段代码, 和CPU中维护内存一致性的写屏障不太一样哈. 所以有了写屏障后, 第3步, A.obj=C时, 会把C加入写屏障buf. 最终还是会被扫描的.
+**如何解决这个问题?**
+
+ go使用了写屏障, 这里的**写屏障是指由编译器生成的一小段代码.** 在**gc时对指针操作前执行的一小段代码**, 和CPU中维护内存一致性的写屏障不太一样哈. 所以有了写屏障后, 第3步, A.obj=C时, 会把C加入写屏障buf. 最终还是会被扫描的.
 
 
 
@@ -365,9 +363,9 @@ gc拿到一个指针, 如何把这个指针指向的对象其引用的子对象�
 
 那我们是不是得知道对象有多大, 从哪开始到哪结束, 同时要知道内存上的8个字节, 哪里是指针, 哪里是普通的数据. 
 
-首先go的对象是mspan管理的, 我们如果能知道对象属于哪个mspan, 就知道对象多大, 从哪开始, 到哪结束了. 
+**首先go的对象是mspan管理的, 我们如果能知道对象属于哪个mspan, 就知道对象多大, 从哪开始, 到哪结束了.** 
 
-前面我们讲到了areans结构, 可以通过指针加上一定的偏移量, 就知道属于哪个heap arean 64M块. 再通过对64M求余, 结合spans数组, 即可知道属于哪个mspan了.
+**前面我们讲到了areans结构, 可以通过指针加上一定的偏移量, 就知道属于哪个heap arean 64M块. 再通过对64M求余, 结合spans数组, 即可知道属于哪个mspan了.**
 
 结合heapArean的bitmap和每8个字节在heapArean中的偏移, 就可知道对象每8个字节是指针还是普通数据(这里的bitmap是在分配对象时根据type信息就设置了, type信息来源于编译器生成)
 
@@ -387,19 +385,19 @@ gc拿到一个指针, 如何把这个指针指向的对象其引用的子对象�
 
 ![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesRPZs40BNUcPSpv32K8p2ibbLsYq63ObkJYicQUmVRXa8a1zx84G6PARw/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
 
-大家对并发GC除了怎么保证不漏指针有疑问外, 可能还会疑问, 并发GC如何保证能够跟得上应用程序的分配速度? 会不会分配太快了, GC完全跟不上, 然后OOM?
+**大家对并发GC除了怎么保证不漏指针有疑问外, 可能还会疑问, 并发GC如何保证能够跟得上应用程序的分配速度? 会不会分配太快了, GC完全跟不上, 然后OOM?**
 
-这个就是Golang GC Pacer的作用. 
+这个就是**Golang GC Pacer的作用.** 
 
-Go的GC是一种比例GC, 下一次GC结束时的堆大小和上一次GC存活堆大小成比例. 由GOGC控制, 默认100, 即2倍的关系, 200就是3倍, 以此类推. 
+**Go的GC是一种比例GC, 下一次GC结束时的堆大小和上一次GC存活堆大小成比例. 由GOGC控制, 默认100, 即2倍的关系, 200就是3倍, 以此类推.** 
 
-假如上一次GC完成时, 存活对象1000M, 默认GOGC 100, 那么下次GC会在比较接近但小于2000M的时候(比如1900M)开始, 争取在堆大小达到2000M的时候结束. 
+**假如上一次GC完成时, 存活对象1000M, 默认GOGC 100, 那么下次GC会在比较接近但小于2000M的时候(比如1900M)开始, 争取在堆大小达到2000M的时候结束.** 
 
-这之间留有一定的裕度, 会计算待扫描对象大小(根据历史数据计算)与可分配的裕度的比例, 应用程序分配内存根据该比例进行辅助GC, 如果应用程序分配太快了, 导致credit不够, 那么会被阻塞, 直到后台的mark跟上来了,该比例会随着GC进行不断调整. 
+**这之间留有一定的裕度, 会计算待扫描对象大小(根据历史数据计算)与可分配的裕度的比例, 应用程序分配内存根据该比例进行辅助GC, 如果应用程序分配太快了, 导致credit不够, 那么会被阻塞, 直到后台的mark跟上来了,该比例会随着GC进行不断调整.** 
 
-GC结束后, 会根据这一次GC的情况来进行负反馈计算, 计算下一次GC开始的阈值. 如何保证按时完成GC呢? 
+**GC结束后, 会根据这一次GC的情况来进行负反馈计算, 计算下一次GC开始的阈值. 如何保证按时完成GC呢?** 
 
-GC完了后, 所有的mspan都需要sweep, 类似于GC的比例, 从GC结束到下一次GC开始之间有一定的堆分配裕度, 会根据还有多少的内存需要清扫, 来计算分配内存时需要清扫的span数这样的一个比例.
+**GC完了后, 所有的mspan都需要sweep, 类似于GC的比例, 从GC结束到下一次GC开始之间有一定的堆分配裕度, 会根据还有多少的内存需要清扫, 来计算分配内存时需要清扫的span数这样的一个比例.**
 
 ![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesCcab82skBv2LIJoRny3sGFsQQPpYKWluuKoyznQVUWJ9VJ36GqX09Q/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
 
@@ -426,8 +424,6 @@ runqueue表示的是全局队列待运行协程数量, 后面的数字表示每�
 其中一些数据的含义, 在分享的时候没有怎么解释, 不过网上的解释几乎没有能完全解释正确. 
 
 我这里敲一下. 其实一般关注堆大小和两个stw的wall time即可. 
-
-
 
 gc 8913(第8913次gc) @2163.341s(在程序运行的第2163s) 1%(gc所有work消耗的历史累计CPU比例, 所以其实这个数据没太大意义) 0.13(第一个stw的wall time)+14(并发mark的wall time)+0.20(第二个stw的wall time) ms clock, 1.1(第一个stw消耗的CPU时间)+21(用户程序辅助扫描消耗的cpu时间)/22(分配用于mark的P消耗的cpu时间)/0(空闲的P用于mark的cpu时间)+1.6ms(第2个stw的cpu时间) cpu, 147(gc开始时的堆大小)->149(gc结束的堆大小)->75MB(gc结束时的存活堆大小), 151 MB goal(本次gc预计结束的堆大小), 8P(8个P)
 
