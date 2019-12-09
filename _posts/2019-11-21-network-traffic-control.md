@@ -1,7 +1,7 @@
 ---
 title: Linux 网络——流量控制
 subtitle: 流量控制traffic control
-layout： post
+layout: post
 tags: [linux,networking,traffic control]
 ---
 
