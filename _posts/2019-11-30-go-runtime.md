@@ -5,8 +5,6 @@ tags: [go,runtime]
 layout: post
 ---
 
-
-
 [转载地址](https://mp.weixin.qq.com/s/5l4EG5fUEYBlbQMsegmL1g)
 
 # golang runtime
