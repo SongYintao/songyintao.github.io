@@ -2,8 +2,7 @@
 title: Docker metric
 subtitle: docker 各项指标监控信息采集
 layout: post
-tags: [docker metric]
-
+tags: [docker,metric]
 ---
 
 ​	在部署的docker项目越来越多，测试环境稳定性显得越来越重要。那么，如何对现有的docker daemon进行配置升级，提供监测功能呢？下面我们来看看。
