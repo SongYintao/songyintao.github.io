@@ -1,4 +1,9 @@
-
+---
+title: What is DHCP? 理论
+subtitle: what is dhcp????
+layout: post
+tags: [network,linux,docker,cni]
+---
 
 ​	DHCP 通常是用于局域网络内的一个通讯协议，他主要藉由客户端传送广播封包给整个物理网段内的所有主机， 若局域网络内有 DHCP 服务器时，才会响应客户端的 IP 参数要求。所以啰，DHCP 服务器与客户端是应该要在同一个物理网段内的。 至于整个 DHCP 封包在服务器与客户端的来来回回情况有点像底下这样：
 

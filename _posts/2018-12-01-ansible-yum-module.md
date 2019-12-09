@@ -2,7 +2,7 @@
 title: Ansible 
 subtitle: Ansible yum 模块学习
 layout: post
-tag: [ansible,yum]
+tags: [ansible,yum]
 ---
 
 ansible使用过程记录。

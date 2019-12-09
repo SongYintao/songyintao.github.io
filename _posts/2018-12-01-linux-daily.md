@@ -1,7 +1,7 @@
 ---
 title: Linux 命令笔记
 subtitle: 每天一点点，linux命令使用
-tag: [linux,shell]
+tags: [linux,shell]
 layout: post
 ---
 

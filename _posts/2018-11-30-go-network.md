@@ -2,7 +2,7 @@
 title: Go基础：网络编程
 subtitle: go网络编程简介
 layout: post
-tag: [go]
+tags: [go]
 ---
 
 ​	我们将学习一下Go语言的网络编程。Go语言标准库里提供的net包，支持基于IP层、TCP／UDP层及更高层面（如HTTP、FTP、SMTP）的网络操作，其中用于IP层的称为`Raw Socket`。
