@@ -2,7 +2,7 @@
 title: 深入理解go——同步和并发设计模式
 subtitle: go学习同步和并发设计模式
 layout: post
-tags: [go,并发]
+tags: [go]
 ---
 
 同步和并发设计模式
