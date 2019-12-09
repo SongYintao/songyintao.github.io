@@ -3,6 +3,7 @@ title: Linux网络——vlan、overlay
 subtitle: linux基础知识，vlan、overlay
 layout: post
 tags: [linux,networking,vlan,overlay]
+comments: true
 ---
 
 [转载地址](https://feisky.gitbooks.io/sdn/content/basic/vlan.html#vlan)
