@@ -4,9 +4,8 @@ subtitle: Docker xxx
 layout: post
 tags: [docker]
 ---
+
 # docker，containerd，runc，docker-shim
-
-
 
 [https://www.jianshu.com/p/52c0f12b0294](https://www.jianshu.com/p/52c0f12b0294)
 
