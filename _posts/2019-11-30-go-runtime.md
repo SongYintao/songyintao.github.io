@@ -20,7 +20,7 @@ layout: post
 
 
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesqBJiaZW3qsMSSDGJibD8sXjU1ayMJYZV6TZJHldq36fLm1U9EicDoRv3g/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime.png)
 
 ## 为什么去了解runtime呢?
 
@@ -28,15 +28,15 @@ layout: post
 2. **好奇心**: 大家写久了go, 惊叹于它的简洁, 高性能外, 必然对它是怎么实现的有很多好奇. 协程怎么实现, GC怎么能并发, 对象在内存里是怎么存在的? 等等
 3. 技术深度的一种 
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesnXySYJB2QBha8sgaJVjiaTXKswzX4ujW1snyJPric9zdAjaaAhricoYSQ/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-2.png)
 
 
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesK4Hu4fGDueqRM8JU2iaoaRZYsLxeeDot4jNfiaVVHl2MU4wA6EyMLQhw/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-3.png)
 
 
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesCbiaS8m4Wz6JSgP0K3rV3vorn1wcB10A7bFeekAaAIAkQynEJAOaT8Q/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-4.png)
 
 **go的runtime代码在go sdk的runtime目录下**. 
 
@@ -51,15 +51,15 @@ layout: post
 
 如上所示, 一些常用的关键字被编译成runtime包下的一些函数调用.
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesMLO6V2DMfKA4kSrLOJA9I6G8fTMN2e7ZZBBcttxvncAonoBWia5busg/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-6.png)
 
 左边标粗的是一些更新比较大的版本. 右边的GC STW仅供参考.
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesBSmg3SkkibwFvO8XUFLiblJnBXOUg68rianR47QBje6BPXKq5fUvBTDUQ/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-5.png)
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesVHmbZeHkgxibhiajwwmdJlw3IH4BrqO0pSkD0bYSp0LTibGXslNvq2a9g/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-7.png)
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesG35yPug4bM3WSAQsWt8c6LasQ7JbwJZcwI7fb0nvibjJP2Cv82creQQ/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-8.png)
 
 **Goroutine是一种用户态线程**。不断的共享，不断的减少切换成本。（可参考现代操作系统的文章，线程的实现：内核态、用户态）。
 
@@ -87,7 +87,7 @@ CPU在时钟的驱动下, 根据PC寄存器从程序中取指令和操作数, �
 
 **go在用户态实现调度, 所以go要有代表协程这种执行流的结构体, 也要有保存和恢复上下文的函数, 运行队列.** 理解了阻塞的真正含义, 也就知道能够比较容易理解, 为什么go的锁, channel这些不阻塞线程. 对于实现的同步执行流效果, 又不阻塞线程的网络, 接下来也会介绍.
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesiaUS9iaFubwRw1BUY8h2DicYhHaZqnKVb7xNg3vdSqY9qOLYPFHmgf1Jw/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-9.png)
 
 
 
@@ -105,7 +105,7 @@ go func1(arg1 type1,arg2 type2){....}(a1,a2)
 
 ## GM模型
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesNb23ibDcUKibwjicwhvwMZFGAp7H73NEk3U7oEno3LJwTVHnzpMnia32qA/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-10.png)
 
 有了协程的这种执行流形式, 那待运行的协程放在哪呢? 在Go1.0的时候:
 
@@ -117,7 +117,7 @@ go func1(arg1 type1,arg2 type2){....}(a1,a2)
 
 ## GPM模型
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesUG3FhZkIXysRR3TvJeicoYtiaX6nwmyR9r9sQBxrzxvdgmL1TotVlceg/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-11.png)
 
 在1.1中调度模型更改为**GPM模型**, 引入**逻辑Process的概念**, **表示执行Go代码所需要的资源, 同时也是执行Go代码的最大的并行度**. 这个概念可能很多人不知道怎么理解.
 
@@ -133,7 +133,7 @@ go func1(arg1 type1,arg2 type2){....}(a1,a2)
 
 ## 协程状态及流转
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesS2Y1aG3tIhDQzZQvukhwU4LtlZwPWHBydRiab0ttTWlkM5Hib0PRwHKQ/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-12.png)
 
 协程的状态其实和线程状态类似,状态转换和发生状态转换的时机如图所示. 还是需要注意: **协程只是一个执行流, 并不是运行实体.**
 
@@ -141,13 +141,13 @@ go func1(arg1 type1,arg2 type2){....}(a1,a2)
 
 ### **调度**
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesadxyJHssdfYoemU6rSG1h1PxP8sRvezGN6WmTicYLVWdytJoZ6pBVPw/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-13.png)
 
 并没有一个一直在运行调度的调度器实体. 当一个协程切换出去或新生成的m, go的运行时从stw中恢复等情况时, 那么接下来就需要发生调度. go的调度是通过线程(m)执行runtime.schedule函数来完成的.
 
 ### sysmon协程
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujes2A0Jl5lLksnkrPAEYl8QL3eHp9rb4LtNpEzAtP6lxwUCuQpzqxOpXg/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime--14.png)
 
 在linux内核中有一些执行定时任务的线程, 比如定时写回脏页的pdflush, 定期回收内存的kswapd0, 以及每个cpu上都有一个负责负载均衡的migration线程等. 
 
@@ -155,7 +155,7 @@ go func1(arg1 type1,arg2 type2){....}(a1,a2)
 
 ## 协作式抢占
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesZmwFaIiaJDia6s3ygpicShkWUKCO1qZSPLkcBq0aSPLbsUDUKh8ibJy7pA/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-15.png)
 
 go目前(1.12)还没有实现非协作的抢占. **基本流程是sysmon协程标记某个协程运行过久, 需要切换出去, 该协程在运行函数时会检查栈标记, 然后进行切换.**
 
@@ -163,7 +163,7 @@ go目前(1.12)还没有实现非协作的抢占. **基本流程是sysmon协程�
 
 ## 同步执行流不阻塞线程的网络的实现
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesGLsnvMpF3Sh6J1GfufmNZrDd9bTWPTBO0sMn0VjG2khD2K0qW99pDg/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-16.png)
 
 **go写后台最舒服的就是能够以同步写代码的方式操作网络, 但是网络操作不阻塞线程**. 
 
@@ -185,21 +185,21 @@ func netpollopen(fd uintptr, pd *pollDesc) int32 {var ev epollevent    ev.events
 
 ## 调度相关结构体
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujes3HCPAHvQPvLwBH2gDM9FmLv3ibM1KQKakOZVPerXicichrVkGLOr3Mrfg/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-17.png)
 
 ## 调度综述
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesejicmZfXKJIf05G5vKfWOicHvgSKv5D2qbn8FZUMv2dHgLic6x2JNfuaQ/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-18.png)
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesb3xbc9ZP5k5WESN6V673MMOcWx6ClQ7FwOs3RZribrnNkrCe3oj3lTg/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-19.png)
 
 # 内存分配
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujeszEicLjoHmvicvBePcka8hItascIDXRCewhSZf0kYD4TelkIvdFK0me2Q/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-20.png)
 
 ## 内存分配简介
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesaMgHUa3ibxtFCzgzeDITm06jI0Z3Kic5ibI3hu8CZgICHibfJncGGdLjuA/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-21.png)
 
 **Go的分配采用了类似tcmalloc的结构.** 
 
@@ -215,7 +215,7 @@ func netpollopen(fd uintptr, pd *pollDesc) int32 {var ev epollevent    ev.events
 
 ## 内存空间结构
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesfia0SxKTAjWBS85yPxCjBLHOWdgukEfbKklqKEib82nqFAS37Zb4CLgA/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-22.png)
 
 在1.10以前go的堆地址空间是线性连续扩展的, 比如在1.10(linux amd64)中, 最大可扩展到512GB. 
 
@@ -229,7 +229,7 @@ func netpollopen(fd uintptr, pd *pollDesc) int32 {var ev epollevent    ev.events
 
 ###  **span机制**
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesOYR1U9Oplj9CNqvTTEkWFRSpxhrJneQr7ozVKfYwzXVW9ISdcQM3Ew/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-23.png)
 
 前面提到了**go的内存分配类似于tcmalloc**, **采用了span机制来减少内存碎片**. 
 
@@ -241,7 +241,7 @@ func netpollopen(fd uintptr, pd *pollDesc) int32 {var ev epollevent    ev.events
 
 
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesHsMydVkRs6Bykx0srVZ7ybWYNYX2wEQ9rNCnnl49MHiczQEGlyWd22w/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-24.png)
 
 多层次的分配Cache, 每个P上有一个mcache, mcache会为每个size最多缓存一个span, 用于无锁分配. 
 
@@ -253,7 +253,7 @@ func netpollopen(fd uintptr, pd *pollDesc) int32 {var ev epollevent    ev.events
 
 **几种特殊的分配器**
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesm9naeSuPVDTpHUZuMPLdAD0u7r6huBg2xLNPIDw96kJbv0fm82IicGA/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-26.png)
 
 - 对于很小的对象分配, go做了个优化, 把小对象合并, 以移动指针的方式分配. 
 
@@ -269,29 +269,29 @@ func netpollopen(fd uintptr, pd *pollDesc) int32 {var ev epollevent    ev.events
 
 **内存分配综合**
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesTQdw8uQQT5I3zZzDboUAGaicibdTEhkzRzgUmojclsngzxDO6bxE11Ag/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-27.png)
 
 **GC**
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesicrtqPsRqqhmCY1icPpg9x6ic0ILj8TtSsY8BTlfEQia3FDr3CznKEA7Ew/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-28.png)
 
 **Golang GC简述**
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesGkg2okQAmBK4hKlJ69Zia2ULF5vomZT4puqzx1JScgwAj3eA20TKICg/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-29.png)
 
 **GC简介**
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesvMfBB4CiawVrOtjMdUWus6DqSQA8V5ySM5HrnvibFIvZf1MaMb8icsjbw/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-30.png)
 
 GC并不是个新事物, 使得GC大放光彩的是Java语言.
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujeslvZZk99bExB462vWS5mxCmNfFSfgdufbzJo2BiajfZ1j4fWJibwnksCw/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-31.png)
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesNtgOYxytD4sCDvyVxnwhIdMDYJfSZuPXt2wtJpXMO5PXZsE7cWlNjg/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-32.png)
 
 ## Golang GC发展
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesFK6icxiceT3Kos0ibuVqUWZicqg5JP4rUsNnjgicxd0iahoGq8smeBQQ7PAg/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-33.png)
 
 上面是几个比较重要的版本. 左图是根据twitter工程师的数据绘制的(堆比较大), 从1.4的百ms级别的停顿到1.8以后的小于1ms. 
 
@@ -301,7 +301,7 @@ GC并不是个新事物, 使得GC大放光彩的是Java语言.
 
 ### **三色标记**
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesWshDIJ8xiatpmZUSVYlIb3I2xdcpvgqFT9WoAZBCVSic4JDgpVRSVXjQ/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-34.png)
 
 go采用的是并发三色标记清除法. 
 
@@ -317,7 +317,7 @@ go采用的是并发三色标记清除法.
 
 ### **写屏障**
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesL9ib2XxJwtY6PudAmDuMaVIicpsFdOsCzIPapjl6k0D8D8PjRM3FfgSg/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-35.png)
 
 GC最基本的就是正确性: 不漏标记对象, 程序还在用的对象都被清除了, 那程序就错误了. 有一点浮动垃圾是允许的. 
 
@@ -335,7 +335,7 @@ GC最基本的就是正确性: 不漏标记对象, 程序还在用的对象都�
 
 
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujessAFmCZEOnynibvK4MKKj7WbrqZOsydFsZquanhkATkMHaTzcicvwD0qg/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-37.png)
 
 这里感受一下写屏障具体生成的代码. 
 
@@ -347,13 +347,13 @@ GC最基本的就是正确性: 不漏标记对象, 程序还在用的对象都�
 
 **三色状态**
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesLXCwQnWaJ9ZibbZice43picibQicpah9EpNshgT5gsSaZyUwdxjpmjpQ0BA/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-38.png)
 
 并没有这样一个集合把不同状态对象放到对应集合中. 只是一个逻辑上的意义.
 
 ### 扫描和元信息
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesbqtVNKeruibso6BeQKLK61DlDu2GgTibs8K6HRibdBTXic5oBe0Q4U8Beg/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-39.png)
 
 gc拿到一个指针, 如何把这个指针指向的对象其引用的子对象都加到扫描队列呢? 而且go还允许内部指针, 似乎更麻烦了. 
 
@@ -369,7 +369,7 @@ gc拿到一个指针, 如何把这个指针指向的对象其引用的子对象�
 
 **GC流程**
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujes6l48pMKuIdOpRrWXdnnAYM7lkXXIiaZHYOwYWuTYbxCEv6HZqMFP33Q/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-40.png)
 
 1.5和1.12的GC大致流程相同. 
 
@@ -381,7 +381,7 @@ gc拿到一个指针, 如何把这个指针指向的对象其引用的子对象�
 
 ## Golang GC Pacer
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesRPZs40BNUcPSpv32K8p2ibbLsYq63ObkJYicQUmVRXa8a1zx84G6PARw/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-41.png)
 
 **大家对并发GC除了怎么保证不漏指针有疑问外, 可能还会疑问, 并发GC如何保证能够跟得上应用程序的分配速度? 会不会分配太快了, GC完全跟不上, 然后OOM?**
 
@@ -397,15 +397,15 @@ gc拿到一个指针, 如何把这个指针指向的对象其引用的子对象�
 
 **GC完了后, 所有的mspan都需要sweep, 类似于GC的比例, 从GC结束到下一次GC开始之间有一定的堆分配裕度, 会根据还有多少的内存需要清扫, 来计算分配内存时需要清扫的span数这样的一个比例.**
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesCcab82skBv2LIJoRny3sGFsQQPpYKWluuKoyznQVUWJ9VJ36GqX09Q/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-52.png)
 
 **实践与总结**
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesaKzH66DkADjk7jS9SmveUgEcZrvQU2mpibicRJAqJxXbtR05kayibcx0A/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-68.png)
 
 ## 观察调度
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesicVFRY9XTE1ETiaC3ryXyg5ZzGmUJCbACAI9OpeA0nCLLOkHGniaVSgibQ/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)观察一下调度, 加一些请求. 
+![img](../img/go-runtime-67.png)观察一下调度, 加一些请求. 
 
 我们可以看到虽然有1000个连接, 但是go只用了几个线程就能处理了, 表明go的网络的确是由epoll管理的. 
 
@@ -417,7 +417,7 @@ runqueue表示的是全局队列待运行协程数量, 后面的数字表示每�
 
 **观察GC**
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesWnUTRDfoY2d54MJ6GDJbNPeYwVC4UUMjWG5V85c9ZVfPwvsH5JWCAw/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-66.png)
 
 其中一些数据的含义, 在分享的时候没有怎么解释, 不过网上的解释几乎没有能完全解释正确. 
 
@@ -427,35 +427,35 @@ gc 8913(第8913次gc) @2163.341s(在程序运行的第2163s) 1%(gc所有work消�
 
 ## 优化
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujes29GJZzwicfvljiclq3TXQWSicHX7HgldxSiaPSdKmKrGsG0VsPiancjN7wQ/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-65.png)
 
 个人建议, 没事不要总想着优化, 好好curd就好.
 
 
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesWGNvCoKEwfPY2udrNyF1RXibfTic05DpnkgBV7OQvd5ZicTicLewm50ribw/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-64.png)
 
 当然还是有一些优化方法的..
 
 **一点实践**
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesGWgyZAicyGy2jYeMXeQVGbvyubxiaiakmepTdfAQCkouTqWVZyGwGYooA/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-63.png)
 
 我们将pprof的开启集成到模板中, 并自动选择端口, 并集成了gops工具, 方便查询runtime信息, 同时在浏览器上可直接点击生成火焰图, pprof图, 非常的方便, 也不需要使用者关心.
 
 **问题排查的一点思路**
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesZrXOdAn2S2BYYoIzZ6uvKiaBOGM5UUZCicFgY8cBEUH3PPHde4iangnzw/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-62.png)
 
 **一次有意思的问题排查**
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesj7Bj93fTgVpfGtDibCibIY7YrSenJbscxqEcSRC4iaWgJyUekqUvvlpng/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-61.png)
 
 负载, 依赖服务都很正常, CPU利用率也不高, 请求也不多, 就是有很多超时.
 
 
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujessXeuy8xPNib3RD6TqIQXibDSJiayib353pJSYkhPCWzCqlImOMwaEzs4kg/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-60.png)
 
 该服务在线上打印了debug日志, 因为早期的服务模板开启了gctrace, 框架把stdout重定向到一个文件了. 而输出gctrace时本来是到console的, 输出到文件了, 而磁盘跟不上, 导致gctrace日志被阻塞了.
 
@@ -463,13 +463,13 @@ gc 8913(第8913次gc) @2163.341s(在程序运行的第2163s) 1%(gc所有work消�
 
 # Runtime的一点个人总结
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesNQUonBbGGfIKBibPovPXK5CRfLeGGukiaeYbYPKOZJLNBP2Hia0hiawk4g/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-53.png)
 
 并行, 纵向多层次, 横向多个class, 缓存, 缓冲, 均衡.
 
 **参考文档**
 
-![img](https://mmbiz.qpic.cn/mmbiz_jpg/SE7gZKCslX1Z2XzSBcURSfst1pbVujesNCcJLogtmSrWPat3qia32VY5wQz1WSgD6vegwCFTQUYY6iamt1m8zd2Q/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+![img](../img/go-runtime-55.png)
 
 
 
