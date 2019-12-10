@@ -255,7 +255,7 @@ Some interesting facts about **TCMalloc**:
 
 ## TCMalloc——线程缓存Malloc
 
-**The secret behind TCMalloc performance is that <u>it uses thread-local cache to store some preallocated memory “objects”</u>**, **so that <u>small allocations are satisfied from the thread-local cache</u> [11](https://povilasv.me/go-memory-management/#fn-1784-11). Once <u>thread-local cache is out of space</u>, memory objects are <u>moved from central data structures into thread-local cache</u>**.
+**The secret behind TCMalloc performance is that <u>it uses thread-local cache to store some preallocated memory “objects”</u>**, **so that <u>small allocations are satisfied from the thread-local cache</u>. Once <u>thread-local cache is out of space</u>, memory objects are <u>moved from central data structures into thread-local cache</u>**.
 
 ![img](https://povilasv.me/wp-content/uploads/2018/06/tcmalloc_lib.png)
 
@@ -552,21 +552,21 @@ Summing all those addresses will probably leave me with the same ~380Mib. I am t
 
 ## Let’s try a simpler program
 
-```
+```go
 func main() {
-go func() {
-for {
-var m runtime.MemStats
-runtime.ReadMemStats(&m)
+    go func() {
+      for {
+          var m runtime.MemStats
+          runtime.ReadMemStats(&m)
 
-log.Println(float64(m.Sys) / 1024 / 1024)
-log.Println(float64(m.HeapAlloc) / 1024 / 1024)
-time.Sleep(10 * time.Second)
-}
-}()
+          log.Println(float64(m.Sys) / 1024 / 1024)
+          log.Println(float64(m.HeapAlloc) / 1024 / 1024)
+          time.Sleep(10 * time.Second)
+      }
+    }()
 
-fmt.Println("hello")
-time.Sleep(1 * time.Hour)
+    fmt.Println("hello")
+    time.Sleep(1 * time.Hour)
 }
 go build main.go
 ./main
