@@ -1,6 +1,6 @@
 ---
-title: 深入理解GO:Memory design
-subtitle: go 内存管理
+title: 深入理解GO-Memory1
+subtitle: go内存管理
 tags: [go,memory]
 layout: post
 ---

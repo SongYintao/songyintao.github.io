@@ -1,6 +1,6 @@
 ---
-title: 深入理解GO:Go Memory Manage Part2
-subtitle: go 内存管理2
+title: 深入理解GO-Memory2
+subtitle: go内存管理
 tags: [go,memory]
 layout: post
 ---
