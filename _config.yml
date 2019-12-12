@@ -107,7 +107,7 @@ social-network-links:
 #gtag: ""
 
 # Fill in your Google Analytics ID to track your website using GA
-#google_analytics: ""
+google_analytics: "UA-154448492-1"
 
 # Google Tag Manager ID
 #gtm: ""
@@ -124,7 +124,7 @@ social-network-links:
 # --- Comments --- #
 
 # Fill in your Disqus shortname (NOT the userid) if you want to support Disqus comments
-# disqus: ""
+disqus: "https-songyintao-github-io"
 
 # To use Facebook Comments, fill in a Facebook App ID
 # fb_comment_id: ""
