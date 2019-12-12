@@ -759,3 +759,306 @@ Because a parent namespace sees PIDs in child namespaces, but not vice versa, th
 
 It is also important to note that the kernel need only worry about generating global PIDs: All other ID types in the global namespace will be mapped to PIDs, so there is no need to generate, for instance, global TGIDs or SIDs. 
 
+...
+
+
+
+
+
+### PID生成
+
+除了管理PIDs，内核还要负责生成唯一的PIDs。
+
+To keep track of which PIDs have been allocated and which are still free, **the kernel uses a large bitmap** in which each PID is identified by a bit. The value of the PID is obtained from the position of the bit in the bitmap. 
+
+Allocating a free PID is then restricted essentially to looking for the first bit in the bitmap whose value is 0; this bit is then set to 1. Conversely, freeing a PID can be implemented by ‘‘toggling‘‘ the corresponding bit from 1 to 0. These operations are implemented using 
+
+```c
+kernel/pid.c 
+
+static int alloc_pidmap(struct pid_namespace *pid_ns) 
+```
+
+to reserve a PID, and 
+
+```c
+kernel/pid.c 
+
+static fastcall void free_pidmap(struct pid_namespace *pid_ns, int pid) 
+```
+
+to free a PID. How they are implemented does not concern us here, but naturally, they must work on a per-namespace basis. 
+
+When a new process is created, it may be visible in multiple namespaces. For each of them a local PID must be generated. This is handled in `alloc_pid`: 
+
+```c
+kernel/pid.c
+struct pid *alloc_pid(struct pid_namespace *ns) {
+    struct pid *pid; 
+    enum pid_type type; 
+    int i, nr;
+    struct pid_namespace *tmp; 
+    struct upid *upid;
+    ...
+    tmp = ns;
+    for (i = ns->level; i >= 0; i--) {
+        nr = alloc_pidmap(tmp);
+        ...
+        pid->numbers[i].nr = nr; 
+        pid->numbers[i].ns = tmp; 
+        tmp = tmp->parent;
+    }
+    pid->level = ns->level;
+		...
+}
+```
+
+All upids that are contained in struct pid are filled with the newly generated PIDs. Each upid instance must be placed on the PID hash: 
+
+```c
+kernel/pid.c 
+
+for (i = ns->level; i >= 0; i--) { 
+    upid = &pid->numbers[i]; 
+    hlist_add_head_rcu(&upid->pid_chain, &pid_hash[pid_hashfn(upid->nr, upid->ns)]); 
+} 
+... 
+return pid; 
+} 
+```
+
+### Task 关系
+
+**In addition to the relationships resulting from ID links**, the kernel is also responsible for **managing the ‘‘family relationships‘‘ established on the basis of the Unix model of process creation 进程创建模型.** The following **terminology 术语** is used in this context: 
+
+❑  If process *A* forks to generate process *B*, *A* is known as the *parent* process and *B* as the *child* process.
+
+If process *B* forks again to create a further process *C*, the relationship between *A* and *C* is sometimes referred to as a *grandparent* and *grandchild* relationship. **父子**
+
+❑  If process *A* forks several times therefore generating several child processes *B*1 , *B*2 , . . . , *Bn* , the relationship between the *Bi* processes is known as a *siblings* relationship. **兄弟**
+
+Figure 2-6 illustrates the possible family relationships graphically.
+ The `task_struct task` data structure **provides two list heads to help implement these relationships**: 
+
+```c
+<sched.h>
+struct task_struct { 
+    ...
+    struct list_head children; /* list of my children */
+    struct list_head sibling; /* linkage in my parent’s children list */
+    ...
+}
+
+```
+
+❑  children is the list head for the list of all child elements of the process. 
+
+❑  siblings is used to link siblings with each other. 
+
+![](../img/linux-kernel-pid-family.png)
+
+New children are placed at the *start* of the siblings list, meaning that the chronological sequence of
+forks can be reconstructed.
+
+## 进程管理的系统调用
+
+I discuss the implementation of the `fork` and `exec` system call families. Normally, **these calls are not issued directly by applications** but are **invoked via an intermediate layer** — the C standard library — that is responsible for communication with the kernel.
+
+The methods used to switch from user mode to kernel mode differ from architecture to architecture.
+
+### 进程复制
+
+The traditional Unix system call to duplicate a process is `fork`. However, it is not the only call imple-
+mented by Linux for this purpose — in fact, there are three:
+
+1. **fork** is the **heavy-weight** call because it creates a full copy of the parent process that then executes as a child process. **To reduce the effort associated with this call, Linux uses the *copy- on-write* technique, discussed below.** 
+
+2. **vfork** is similar to fork but **does not create a copy of the data of the parent process**. Instead, **it shares the data between the parent and child process.** This saves a great deal of CPU time (and if one of the processes were to manipulate the shared data, the other would notice automatically). 
+
+   `vfork` is designed for the situation in which a child process just generated immediately executes an `execve` system call to **load a new program**. **The kernel also guarantees that the parent process is blocked until the child process exits or starts a new program**. 
+
+   Quoting the manual page vfork, it is ‘‘rather unfortunate that Linux revived this specter from the past.’’ **Since fork uses copy-on-write, the speed argument for vfork does not really count anymore, and its use should therefore be avoided.** 
+
+3. **clone** generates threads and **enables a decision to be made as to exactly which elements are to be shared between the parent and the child process and which are to be copied**. 
+
+#### Copy on Write
+
+Not the entire address space of the process but only its page tables are copied. These establish the link between virtual address space and physical pages as described briefly in Chapter 1 and at length in Chapters 3 and 4. The address spaces of parent and child processes then point to the same physical pages.
+
+ **parent and child processes must not be allowed to modify each other’s pages** , which is why the page tables of *both* processes indicate that only read access is allowed to the pages — even though they could be written to in normal circumstances.
+
+Providing that both processes have only read access to their pages in memory, data sharing between the two is not a problem because no changes can be made. 
+
+As soon as one of the processes attempts to write to the copied pages, the processor reports an access error to the kernel (errors of this kind are called *page faults*). The kernel then references additional memory management data structures (see Chapter 4) to check whether the page can be accessed in Read and Write mode or in Read mode only — if the latter is true, a *segmentation fault* must be reported to the  process. As you see in Chapter 4, the actual implementation of the page fault handler is more complicated because other aspects, such as swapped-out pages, must also be taken into account. 
+
+The condition in which a page table entry indicates that a page is ‘‘Read Only’’ although normally it would be writable allows the kernel to recognize that the page is, in fact, a COW page. It therefore creates a copy of the page that is assigned exclusively to the process — and may therefore also be used for write operations. How the copy operation is implemented is not discussed until Chapter 4 because extensive background knowledge of memory management is required. 
+
+**The COW mechanism enables the kernel to delay copying of memory pages for as long as possible and — more importantly — to make copying unnecessary in many cases. This saves a great deal of time.** 
+
+
+
+#### Executing System Calls 
+
+The entry points for the `fork`, `vfork`, and `clone` system calls are the `sys_fork`, `sys_vfork`, and `sys_clone` functions. Their definitions are architecture-dependent because the way in which parameters are passed between userspace and kernel space differs on the various architectures (see Chapter 13 for further infor- mation). **The task of the above functions is to extract the information supplied by userspace from the registers of the processors and then to invoke the architecture-*in*dependent `do_fork` function responsible for process duplication.** The prototype of the function is as follows. 
+
+```c
+kernel/fork.c 
+
+long do_fork(unsigned long clone_flags, 
+             unsigned long stack_start, 
+						 struct pt_regs *regs, 
+             unsigned long stack_size, 
+             int __user *parent_tidptr, 
+             int __user *child_tidptr) 
+```
+
+The function requires the following arguments: 
+
+❑  A flag set (**clone_flags**) to specify duplication properties. The low byte specifies the signal num- ber to be sent to the parent process when the child process terminates. The higher bytes hold various constants discussed below. 
+
+❑  **The start address of the user mode stack** (start_stack) to be used. 
+
+❑  **A pointer to the register set holding the call parameters in raw form (regs).** The data type used is the architecture-specific struct pt_regs structure, which holds all registers in the order in which they are saved on the kernel stack when a system call is executed (more information is provided in Appendix A). 
+
+❑  **The size of the user mode stack (stack_size).** This parameter is usually unnecessary and set to 0. 
+
+❑  **Two pointers to addresses in userspace (parent_tidptr and child_tidptr) that hold the TIDs of the parent and child processes.** **They are needed for the thread implementation of the NPTL (*Native Posix Threads Lilbrary*) library**. I discuss their meaning below. 
+
+The different fork variants are distinguished primarily by means of the flag set. On most architectures,the classical fork call is implemented in the same way as on IA-32 processors. 
+
+```c
+arch/x86/kernel/process_32.c 
+
+asmlinkage int sys_fork(struct pt_regs regs) { 
+
+return do_fork(SIGCHLD, regs.esp, &regs, 0, NULL, NULL); 
+
+} 
+```
+
+The only flag used is `SIGCHLD`. **This means that the `SIGCHLD` signal informs the parent process once the child process has terminated**. Initially, the same stack (whose start address is held in the esp**(sp: stack pointer )** register on IA-32 systems) is used for the parent and child processes. However, the COW mechanism creates a copy of the stack for each process if it is manipulated and therefore written to. 
+
+If `do_fork` was successful, the PID of the newly created task is returned as the result of the system call. Otherwise the (negative) error code is returned. 
+
+The implementation of `sys_vfork` differs only slightly from that of `sys_fork` in that additional flags are used (CLONE_VFORK and CLONE_VM whose meaning is discussed below). 
+
+`sys_clone` is also implemented in a similar way to the above calls with the difference that `do_fork` is invoked as follows: 
+
+```c
+arch/x86/kernel/process_32.c
+asmlinkage int sys_clone(struct pt_regs regs) {
+    unsigned long clone_flags;
+    unsigned long newsp;
+    int __user *parent_tidptr, *child_tidptr;
+    clone_flags = regs.ebx;
+    newsp = regs.ecx;
+    parent_tidptr = (int __user *)regs.edx; 
+    child_tidptr = (int __user *)regs.edi; 
+    if (!newsp)
+    	newsp = regs.esp;
+    return do_fork(clone_flags, newsp, &regs, 0, parent_tidptr, child_tidptr);
+ }
+```
+
+The `clone` flags are no longer permanently set but **can be passed to the system call as parameters in various registers**. 
+
+Thus, **the first part of the function deals with extracting these parameters**.
+
+ Also, **the stack of the parent process is not copied**; instead, **a new address (newsp) can be specified for it.** (**This is required to generate threads that share the address space with the parent process but use their own stack in this address space**.) 
+
+**Two pointers (`parent_tidptr` and `child_tidptr`) in userspace are also specified for purposes of communication with thread libraries**. Their meaning is discussed in Section 2.4.1.
+
+
+
+#### Implementation of **do_fork** 
+
+All three `fork` mechanisms end up in `do_fork` in `kernel/fork.c` (an architecture-*in*dependent function), 
+
+whose code flow diagram is shown in Figure 2-7. 
+
+`do_fork` begins with an invocation of `copy_process`, which performs the actual work of **generating a new process** and **reusing the parent process data specified by the flags**. Once the child process has been generated, the kernel must carry out the following concluding operations: 
+
+![](../img/linux-kernel-fork-impl.png)
+
+❑  Since `fork` returns the PID of the new task, it must be obtained. This is complicated because the **fork operation could have opened a new PID namespace if the flag `CLONE_NEWPID` was set.** If this is the case, then `task_pid_nr_ns` is required to obtain the PID that was selected for the new process in the *parent* namespace, that is, the namespace of the process that issued fork. 
+
+**If the PID namespace remains unchanged**, calling `task_pid_vnr` is enough to obtain the local PID because old and new processes will live in the same namespace. 
+
+```c
+kernel/fork.c 
+
+nr = (clone_flags & CLONE_NEWPID) ?
+ task_pid_nr_ns(p, current->nsproxy->pid_ns) : task_pid_vnr(p); 
+```
+
+❑  **If the new process is to be monitored with Ptrace** (see Chapter 13), the `SIGSTOP` signal is sent to 
+
+the process immediately after generation to allow an attached debugger to examine its data. 
+
+❑  The child process is woken using `wake_up_new_task`; in other words, **the `task` structure is added to the scheduler queue.** The `scheduler` also gets a chance to specifically handle newly started tasks, which, for instance, allows for implementing a policy that gives new tasks a good chance to run soon, but also prevents processes that fork over and over again to consume all CPU time. 
+
+**If a child process begins to run before the parent process, this can greatly reduce copying effort, especially if the child process issues an exec call after fork.** However, keep in mind that **enqueuing a process in the scheduler data structures does not mean that the child process begins to execute immediately but rather that it is available for selection by the scheduler.** 
+
+❑  If the` vfork` mechanism was used (the kernel recognizes this by the fact that the `CLONE_VFORK` flag is set), the *completions* mechanism of the child process must be enabled. The `vfork_done` element of the child process task structure is used for this purpose. **With the help of the `wait_for_completion` function, the parent process goes to sleep on this variable until the child process exits.** When a process terminates (or a new application is started with execve), the kernel automatically invokes `complete(vfork_done)`. This wakes all processes sleeping on it. In Chapter 14, I discuss the implementation of completions in greater detail. 
+
+By adopting this approach, the kernel ensures that the parent process of a child process generated using vfork remains inactive until either the child process exits or a new process is executed. The temporary inactivity of the parent process also ensures that both processes do not interfere with each other or manipulate each other’s address space. 
+
+#### Copying Processes 
+
+In `do_fork` the bulk of the work is done by the `copy_process` function, whose code flow diagram is shown in Figure 2-8. Notice that **the function has to handle the main work for the three system calls fork, vfork, and clone**. 
+
+![](../img/linux-kernel-copy-process.png)
+
+let’s restrict our description to **a slightly simplified version of the function** so as **not to lose sight of the most important aspects** in a myriad 无数的 of details.
+
+Quite a number of flags control the behavior of process duplication. **They are all well documented in**
+**the clone(2) man page, and instead of repeating them here, I advise you to just take a look into it** — or, for that matter, any good text on Linux systems programming. More interesting is that there are some
+flag combinations that do not make sense, and the kernel has to catch these. 
+
+
+
+```c
+kernel/fork.c 
+
+static struct task_struct *copy_process(unsigned long clone_flags, 
+                                        unsigned long stack_start, 
+                                        struct pt_regs *regs, 
+                                        unsigned long stack_size, 
+                                        int __user *child_tidptr, struct pid *pid) 
+{ 
+		int retval;
+   	struct task_struct *p;
+   	int cgroup_callbacks_done = 0; 
+    if ((clone_flags & (CLONE_NEWNS|CLONE_FS)) == (CLONE_NEWNS|CLONE_FS)) 
+        return ERR_PTR(-EINVAL); 
+...
+
+```
+
+This is also a good place to recall from the introduction that Linux sometimes has to return a pointer if
+an operation succeeds, and an error code if something fails. 
+
+Unfortunately, the C language only allows a single direct return value per function, so any information about possible errors has to be encoded into the pointer. 
+
+While pointers can in general point to arbitrary locations in memory, **each architecture supported by Linux has a region in virtual address space that starts from virtual address 0 and goes at least 4 KiB far where no senseful information can live.** The kernel can thus reuse this pointer range to encode error codes: If the return value of fork points to an address within the aforementioned range, then the call has failed, and the reason can be determined by the numerical value of the `pointer. ERR_PTR` is a helper macro to perform the encoding of the numerical constant `EINVAL` (invalid operation) into a pointer.
+
+Some further flag checks are required: 
+
+❑  **When a thread is created with `CLONE_THREAD`,** signal sharing must be activated with 
+
+`CLONE_SIGHAND`. Individual threads in a thread group cannot be addressed by a signal. 
+
+❑  **Shared signal handlers** can **only be provided if the virtual address space is shared between parent and child (`CLONE_VM`).** Transitive thinking reveals that **threads  also have to share the address space with the parent**. 
+
+
+
+The **task structures** for parent and child differ only in one element: **A new kernel mode stack is allocated for the new process**. A pointer to it is stored in `task_struct->stack`. Usually the `stack` is stored in a union with `thread_info`, which holds all required processor-specific low-level information about the thread. 
+
+```c
+<sched.h> 
+union thread_union {
+  struct thread_info thread_info; 
+	unsigned long stack[THREAD_SIZE/sizeof(long)]; 
+};
+```
+

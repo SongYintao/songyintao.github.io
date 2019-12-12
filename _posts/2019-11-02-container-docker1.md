@@ -22,3 +22,38 @@ tags: [docker]
 
 
 ## 二、 Daemon中的实现
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Image
+
+- **distribution** 负责与docker registry交互，上传镜像以及v2 registry 有关的源数据
+- **registry**负责docker registry有关的身份认证、镜像查找、镜像验证以及管理registry mirror等交互操作
+- **image** 负责与镜像源数据有关的存储、查找，镜像层的索引、查找以及镜像tar包有关的导入、导出操作
+- **reference**负责存储本地所有镜像的repository和tag名，并维护与镜像id之间的映射关系
+- **layer**模块负责与镜像层和容器层源数据有关的增删改查，并负责将镜像层的增删改查映射到**实际存储镜像层文件的graphdriver模块**
+- **graghdriver**是所有与容器镜像相关操作的执行者
