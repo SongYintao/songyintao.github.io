@@ -1062,3 +1062,304 @@ union thread_union {
 };
 ```
 
+In principle, individual architectures are, however, free to store whatever they like in the stack pointer if they signal this to the kernel by setting the pre-processor constant` __HAVE_THREAD_FUNCTIONS`. In this case, they must provide their own implementations of` task_thread_info` and `task_stack_page`, which allows for obtaining the thread information and the kernel mode stack for a given `task_struct` instance. Additionally, they must implement the function setup_thread_stack that is called in `dup_task_struct` to create a destination for stack. Currently, only IA-64 and m68k do not rely on the default methods of the kernel. 
+
+On most architectures, one or two memory pages are used to hold an instance of thread_union. On IA-32, two pages are the default setting, and thus the available kernel stack size is slightly less than
+ 8 KiB because part is occupied by the thread_info instance. Note, though, that the configuration option `4KSTACKS` decreases the stack size to `4 KiB` and thus to one page. This is advantageous if a large number of processes is running on the system because one page per process is saved. On the other hand, it can lead to problems with external drivers that often tend to be **‘‘stack hogs,’**’ for example, use too much stack space. All central parts of the kernel that are part of the standard distribution have been designed to operate smoothly also with a stack size of 4 KiB, but problems can arise (and unfortunately have in the past) if binary-only drivers are required, which often have a tendency to clutter up the available stack space. 
+
+`thread_info` holds process data that needs to be accessed by the architecture-specific assembly language code. Although the structure is defined differently from processor to processor, its contents are similar to the following on most systems. 
+
+```c
+<asm-arch/thread_info.h> 
+
+struct thread_info { 
+    struct task_struct *task; /* main task structure */
+    struct exec_domain *exec_domain;  /* execution domain */
+    unsigned long flags; /* low level flags */
+    unsigned long status;/* thread-synchronous flags */
+    __u32 cpu; /* current CPU */ 
+    int preempt_count; /* 0 => preemptable, <0 => BUG */
+    mm_segment_t addr_limit;  /* thread address space */ 
+    struct restart_block  restart_block; 
+}
+```
+
+
+
+❑  **task** is a pointer to the `task_struct` instance of the process. 
+
+❑  **exec_domain** is used to implement *execution domains* with which different ABIs (*Application Binary Interface*s) can be implemented on a machine type (e.g., to run 32-bit applications on an AMD64 system in 64-bit mode). 
+
+❑  **flags** can hold various process-specific flags, two of which are of particular interest to us: 
+
+- ❑  **TIF_SIGPENDING** is set if the process has pending signals. 
+
+- ❑  **TIF_NEED_RESCHED** indicates that the process should be or would like to be replaced with another process by the scheduler. 
+
+  Other possible constants — some hardware-specific — which are, however, hardly ever used, are available in <asm-arch/thread_info.h>. 
+
+❑  **cpu** specifies the number of the CPU on which a process is just executing (important on multi- processor systems — very easy to determine on single-processor systems). 
+
+❑  **preempt_count** is a counter needed to implement kernel preemption, discussed in Section 2.8.3. 
+
+❑  **addr_limit** specifies up to which address in virtual address space a process may use. As already noted, there is a limit for normal processes, but kernel threads may access the entire virtual address space, including the kernel-only portions. (This does *not* represent any kind of restric- tion on how much RAM a process may allocate.) Recall that I have touched on the separation between user and kernel address space in the Introduction, and will come back to the details in Section 4. 
+
+❑  **restart_block** is needed to **implement the signal mechanism** (see Chapter 5). 
+
+Figure 2-9 shows the relationship between task_struct, thread_info and the kernel stack. **When a particular component of the kernel uses too much stack space, the kernel stack will crash into the thread information**, and this will most likely lead to severe failures. Besides, this can also lead to wrong information when an emergency stack trace is printed, **so the kernel provides the function `kstack_end` to decide if a given address is within the valid portion of the stack or not.** 
+
+![](../img/linux-kernel-relation-task-thread.png)
+
+`dup_task_struct` copies the contents of `task_struct` and `thread_info` instances of the parent process,
+but **the stack pointer is set to the new `thread_info` instance.** This means that the `task` structures of
+parent and child processes are absolutely identical at this point except for the stack pointer. The child will, however, be modified in the course of `copy_process`.
+
+There are also two symbols named `current` and `current_thread_info` that are defined as macros or functions by all architectures. Their meanings are as follows: 
+
+❑  `current_thread_info` delivers a pointer to the `thread_info` instance of the process currently executing. The address can be determined from the kernel stack pointer because the instance is always located at the top of the stack.Because a separate kernel stack is used for each process, the process to stack assignment is unique. 
+
+❑  `current specifies` the address of the `task_struct` instance of the current process. This function appears very frequently in the sources. The address can be determined using `get_thread_info`:` current = current_thread_info()->task`. 
+
+Let us return to `copy_process`. After `dup_task_struct` has succeeded, **the kernel checks if the maximam number of processes allowed for a particular user are exceeded with the creation of the new task**.
+
+```c
+kernel/fork.c
+if (atomic_read(&p->user->processes) >= p->signal->rlim[RLIMIT_NPROC].rlim_cur) {
+      if (!capable(CAP_SYS_ADMIN) && !capable(CAP_SYS_RESOURCE) && 
+      p->user != current->nsproxy->user_ns->root_user)
+      	goto bad_fork_free;
+} 
+...
+```
+
+The per-user resource counters for the user owning the current process are kept in an instance of
+`user_struct` that is accessible via `task_struct->user`, and the number of processes currently held
+by a particular user is stored in `user_struct->processes`. If this value exceeds the limit set by `rlimit`,
+task creation is aborted — unless the current user is assigned special capabilities (`CAP_SYS_ADMIN` or
+`CAP_SYS_RESOURCE`) or is the root user. **Checking for the root user is interesting: Recall from above that**
+**each PID namespace has its own root user**. This must now be taken into account in the above check.
+
+If resource limits do not prevent process creation, the interface function sched_fork is called to give
+the scheduler a chance to set up things for the new task. 
+
+Essentially, the routines initialize statistical fields and on multi-processor systems probably re-balance the available processes between the CPUs if this is necessary. Besides, the task state is set to **TASK_RUNNING** — which is not really true since the new process is, in fact, not yet running. However, this prevents any other part of the kernel from trying to change the process state from non-running to running and scheduling the new process before its setup has been completely finished.
+
+A large number of **copy_xyz** routines are then invoked to **copy or share the resources of specific kernel subsystems**. The `task structure` contains pointers to instances of `data structures` that describe a sharable or cloneable resource. Because the `task` structure of the child starts out as an exact copy of the parent’s task structure, **both point to the same resource-specific instances initially**. This is illustrated in Figure 2-10. 
+
+Suppose we have two resources: **res_abc** and **res_def**. Initially the corresponding pointers in the task structure of the parent and child process point to the same instance of the resource-specific data structure in memory. 
+
+If **CLONE_ABC** is set, then both processes will share **res_abc**. This is already the case, but **it is additionally necessary to increment the reference counter of the instance to prevent the associated memory space from being freed too soon — memory may be relinquished to memory management only when it is no longer being used by a process**. **If either parent or child modifies the shared resource, the change will be visible in both processes.** 
+
+If **CLONE_ABC** is not set, then a copy of **res_abc** is **created for the child process**, and **the resource counter of the new copy is initialized to 1**. Consequently, if parent or child modifies the resource, then changes will *not* propagate to the other process in this case. 
+
+**As a general rule, the fewer the number of `CLONE flags` set, the less work there is to do**. However, this gives parent and child processes more opportunities to mutually manipulate(互相影响) their data structures — and this must be taken into consideration when programming applications.
+
+![](../img/linux-kernel-copy-clone.png)
+
+❑  `copy_semundo` uses the System V **semaphores**(信号量) of the parent process if COPY_SYSVSEM is set (see Chapter 5). 
+
+❑  `copy_files` uses the file descriptors of the parent process if CLONE_FILES is set. Otherwise, a new files structure is generated (see Chapter 8) that contains the same information as the parent process. This information can be modified independently of the original structure. 
+
+❑  `copy_fs` uses the filesystem context (`task_struct->fs`) of the parent process if CLONE_FS is set. This is an `fs_struct` type structure that holds, for example, the root directory and the current working directory of the process (see Chapter 8 for detailed information). 
+
+❑  `copy_sighand` uses the signal handlers of the parent process (`task_struct->sighand`) if CLONE_SIGHAND or CLONE_THREAD is set. Chapter 5 discusses the struct sighand_struct structure used in more detail. 
+
+❑  `copy_signal` uses the non-handler-specific part of signal handling (`task_struct->signal`, see Chapter 5) together with the parent process if CLONE_THREAD is set. 
+
+❑  `copy_mm` causes the parent process and child process to **share the same address space** if COPY_MM is set. In this case, both processes use the same instance of `mm_struct` (see Chapter 4) to which `task_struct->mm points`. 
+
+> If copy_mm is *not* set, it does not mean that the entire address space of the parent process is copied. The kernel does, in fact, create a copy of the page tables but does not copy the actual contents of the pages. This is done using the COW mechanism only if one of the two processes writes to one of the pages. 
+
+❑  `copy_namespaces` has special call semantics. It is used to set up namespaces for the child process. Recall that several CLONE_NEWxyz flags control which namespaces are *shared* with the parent. However, the semantics are opposite to all other flags: If CLONE_NEWxyz is *not* specified, then the specific namespace is shared with the parent. Otherwise, a new namespace is generated. copy_namespace is a dispatcher that executes a copy routine for each possible namespace. The individual copy routines, however, are not too interesting because they essentially copy data or make already existing instances shared by means of reference counter management, so I will not discuss their implementation in detail. 
+
+❑ `copy_thread` is — in contrast to all other copy operations discussed here — an architecture- specific function that copies the thread-specific data of a process. 
+
+> ***Thread-specific*** **in this context does not refer to any of the** **CLONE** **flags or to the fact
+> that the operation is performed for threads only and not for full processes. It simply
+> means that all data that contribute to the architecture-specific execution context are
+> copied (the term** ***thread*** **is used with more than one meaning in the kernel).**
+
+What is important is to fill the elements of `task_struct->thread`. This is a structure of the `thread_struct` type whose definition is architecture-dependent. It holds all registers (plus other information) needed by the kernel to save and restore process contents during low-level switch- ing between tasks. 
+
+Intimate knowledge of the various CPUs is needed to understand the layout of the individual thread_struct structures. A full discussion of these structures is beyond the scope of this book. However, Appendix A includes some information relating to the contents of the structures on several systems. 
+
+Back in `copy_process`, the kernel must fill in various elements of the task structure that differ between parent and child. These include the following: 
+
+❑  The various list elements contained in `task_struct`, for instance, sibling and children. 
+
+❑  The interval timer elements `cpu_timers` (see Chapter 15). 
+
+❑  The list of pending signals (pending) discussed in Chapter 5. 
+
+After allocating a new pid instance for the task with the mechanisms described before, they are stored in the task structure. **For threads, the thread group ID is the same as that of the forking process**: 
+
+```c
+kernel/fork.c 
+
+ p->pid = pid_nr(pid);
+ p->tgid = p->pid;
+ if (clone_flags & CLONE_THREAD) 
+		p->tgid = current->tgid;
+...
+```
+
+
+Recall that `pid_nr` computes the **global numerical PID for a given pid instance**. 
+
+For regular processes, the parent process is the forking process. **This is different for threads**: Since they are seen as the second (or third, or fourth,...) line of execution *within* the generating process, **their parent is the parent’s parent**. This is easier to express in code than in words: 
+
+```c
+kernel/fork.c 
+
+if (clone_flags & (CLONE_PARENT|CLONE_THREAD)) 
+		p->real_parent = current->real_parent; 
+else 
+  	p->real_parent = current; 
+p->parent = p->real_parent;
+```
+
+Regular processes that are not threads can trigger the same behavior by setting CLONE_PARENT. 
+
+Another correction is required for threads: The thread group leader of a regular process is the process itself. For a thread, the group leader is the group leader of the current process: 
+
+```c
+kernel/fork.c 
+
+p->group_leader = p; 
+
+if (clone_flags & CLONE_THREAD) {
+  p->group_leader = current->group_leader;
+  list_add_tail_rcu(&p->thread_group, &p->group_leader->thread_group); 
+	... 
+} 
+```
+
+**The new process must then be linked with its parent process by means of the children list**. This is handled by the auxiliary macro `add_parent`. Besides, the new process must be included in the ID data structure network as described in Section 2.3.3. 
+
+```c
+kernel/fork.c
+ ...
+add_parent(p);
+if (thread_group_leader(p)) {
+    if (clone_flags & CLONE_NEWPID)
+    		p->nsproxy->pid_ns->child_reaper = p;
+    set_task_pgrp(p, task_pgrp_nr(current)); 
+    set_task_session(p, task_session_nr(current)); 
+    attach_pid(p, PIDTYPE_PGID, task_pgrp(current)); 
+    attach_pid(p, PIDTYPE_SID, task_session(current));
+}
+		attach_pid(p, PIDTYPE_PID, pid); 
+...
+		return p;
+}
+```
+
+`thread_group_leader` checks only **whether pid and tgid of the new process are identical**. If so, the 
+
+process is the leader of a thread group. In this case, some more work is necessary: 
+
+- ❑  Recall that processes in a process namespace that is not the global namespace have their own init task. If a new PID namespace was opened by setting CLONE_NEWPID, this role must be assumed by the task that called clone. 
+- ❑  The new process must be added to the current task group and session. This allows for bringing some of the functions discussed above to good use. 
+
+Finally, the PID itself is added to the ID network. This concludes the creation of a new process! 
+
+
+
+#### Special Points When Generating Threads 
+
+**Userspace thread libraries** use **the `clone` system call to generate new threads**. This call supports flags (other than those discussed above) that **produce certain special effects** in the `copy_process` (and in the associated invoked functions). 
+
+For the sake of simplicity, I omitted these flags above. 
+
+However, **it should be remembered that the differences between <u>a classical process</u> and <u>a thread</u> in the Linux kernel are relatively fluid and both terms are often used as synonyms** (*thread* is also frequently used to mean the architecture-dependent part of a process as mentioned above). 
+
+In this section, **I concentrate on the flags used by <u>user thread libraries</u> (above all, NPTL) to implement multithreading capabilities**.
+
+- ❑  **CLONE_PARENT_SETTID** copies the PID of the generated thread to a point in userspace specified in the clone call (parent_tidptr, the pointer is passed to clone): 
+
+  ```c
+  kernel/fork.c 
+  
+  if (clone_flags & CLONE_PARENT_SETTID) 
+    put_user(nr, parent_tidptr); 
+  ```
+
+  The copy operation is performed in do_fork before the task structure of the new thread is initial- ized and before its data are created with the copy operations. 
+
+- ❑  **CLONE_CHILD_SETTID** first causes a further userspace pointer (**child_tidptr**) passed to clone to be stored in the task structure of the new process. 
+
+  ```c
+  kernel/fork.c 
+  p->set_child_tid = (clone_flags & CLONE_CHILD_SETTID) ? child_tidptr : NULL;
+  ```
+
+   The schedule_tail function invoked when the new process is executed for the first time copies 
+
+  the current PID to this address. 
+
+  ```c
+  kernel/schedule.c 
+  
+  asmlinkage void schedule_tail(struct task_struct *prev) {
+   ... 
+  
+  if (current->set_child_tid)
+   	put_user(task_pid_vnr(current), current->set_child_tid); 
+  ... 
+  } 
+  ```
+
+  
+
+- ❑  **CLONE_CHILD_CLEARTID** has the initial effect in `copy_process` that the userspace pointer `child_tidptr` is stored in the task structure — but this time in a different element. 
+
+  ```c
+  kernel/fork.c 
+  
+  p->clear_child_tid = (clone_flags & CLONE_CHILD_CLEARTID) ? child_tidptr: NULL;
+  ```
+
+   When the process terminates,13 0 is written to the address defined in clear_child_tid.14 
+
+  ```c
+  kernel/fork.c 
+  
+  void mm_release(struct task_struct *tsk, struct mm_struct *mm) { 
+  
+  if (tsk->clear_child_tid&& atomic_read(&mm->mm_users) > 1) { 
+      u32 __user * tidptr = tsk->clear_child_tid; 
+      tsk->clear_child_tid = NULL; 
+      put_user(0, tidptr); 
+      sys_futex(tidptr, FUTEX_WAKE, 1, NULL, NULL, 0); 
+  } 
+  ... 
+  }
+  ```
+
+
+   In addition,` sys_futex`, a fast userspace mutex, is used to wake processes waiting for this event, 
+
+  namely, the end of the thread. 
+
+  The above flags can be used from within userspace to check when threads are generated and destroyed in the kernel. CLONE_CHILD_SETTID and CLONE_PARENT_SETTID are used to check when a thread is gen- erated; CLONE_CHILD_CLEARTID is used to pass information on the death of a thread from the kernel to userspace. **These checks can genuinely be performed in parallel on multiprocessor systems.** 
+
+  
+
+## 内核线程（Kernel Threads）
+
+*Kernel threads* 由内核自己直接启动。委托一个内核函数separate process and execute it there in ‘‘parallel‘‘ to the other processes in the system (and, in fact, in parallel to execution of the kernel itself).15 Kernel threads are often referred to as *(kernel) daemons*. They are used to perform, for example, the following tasks:
+
+❑  To periodically synchronize modified memory pages with the block device from which the pages originate (e.g., files mapped using mmap). 
+
+❑  To write memory pages into the swap area if they are seldom used. 
+
+❑  To manage deferred actions. 
+
+❑  To implement transaction journals for filesystems. 
+
+Basically, there are two types of kernel thread: 
+
+❑  **Type 1** — The thread is started and waits until requested by the kernel to perform a specific action. 
+
+❑  **Type 2** — Once started, the thread runs at periodic intervals, checks the utilization of a specific resource, and takes action when utilization exceeds or falls below a set limit value. The kernel uses this type of thread for continuous monitoring tasks. 
+
