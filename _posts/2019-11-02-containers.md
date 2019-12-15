@@ -134,9 +134,7 @@ cgroup的特点是：　
 
 ###  2、docker架构2
 
-如果觉得上面架构图比较乱可以看这个架构：
-
-### 
+如果觉得上面架构图比较乱可以看这个架构： 
 
 ![img](https://ask.qcloudimg.com/http-save/6436516/7ubz1bs8sv.jpeg?imageView2/2/w/1620)
 
@@ -242,11 +240,11 @@ graphdriver的架构如下：
 
 ![img](https://ask.qcloudimg.com/http-save/6436516/gf63i5jztn.jpeg?imageView2/2/w/1620)
 
-networkdriver的用途是完成Docker容器网络环境的配置，其中包括Docker启动时为Docker环境创建网桥；Docker容器创建时为其创建专属虚拟网卡设备；以及为Docker容器分配IP、端口并与宿主机做端口映射，设置容器防火墙策略等。networkdriver的架构如下：
+**networkdriver**的用途是完成Docker容器网络环境的配置，其中包括Docker启动时为Docker环境创建网桥；Docker容器创建时为其创建专属虚拟网卡设备；以及为Docker容器分配IP、端口并与宿主机做端口映射，设置容器防火墙策略等。networkdriver的架构如下：
 
 ![img](https://ask.qcloudimg.com/http-save/6436516/7x8tcs4r1f.jpeg?imageView2/2/w/1620)
 
-execdriver作为Docker容器的执行驱动，负责创建容器运行命名空间，负责容器资源使用的统计与限制，负责容器内部进程的真正运行等。在execdriver的实现过程中，原先可以使用LXC驱动调用LXC的接口，来操纵容器的配置以及生命周期，而现在execdriver默认使用native驱动，不依赖于LXC。
+**execdriver**作为Docker容器的执行驱动，负责创建容器运行命名空间，负责容器资源使用的统计与限制，负责容器内部进程的真正运行等。在execdriver的实现过程中，原先可以使用LXC驱动调用LXC的接口，来操纵容器的配置以及生命周期，而现在execdriver默认使用native驱动，不依赖于LXC。
 
 具体体现在Daemon启动过程中加载的ExecDriverflag参数，该参数在配置文件已经被设为”native”。这可以认为是Docker在1.2版本上一个很大的改变，或者说Docker实现跨平台的一个先兆。execdriver架构如下：
 
@@ -254,7 +252,7 @@ execdriver作为Docker容器的执行驱动，负责创建容器运行命名空�
 
 ###  9、libcontainer
 
-libcontainer是Docker架构中一个使用Go语言设计实现的库，设计初衷是希望该库可以不依靠任何依赖，直接访问内核中与容器相关的API。
+**libcontainer**是Docker架构中一个使用Go语言设计实现的库，设计初衷是希望该库可以不依靠任何依赖，直接访问内核中与容器相关的API。
 
 正是由于libcontainer的存在，Docker可以直接调用libcontainer，而最终操纵容器的namespace、cgroups、apparmor、网络设备以及防火墙规则等。这一系列操作的完成都不需要依赖LXC或者其他包。libcontainer架构如下：
 
