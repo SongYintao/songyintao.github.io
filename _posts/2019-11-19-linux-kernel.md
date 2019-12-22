@@ -1,8 +1,8 @@
 ---
-title: 深入Linux内核架构:学习笔记
+title: 深入Linux内核架构（1）:进程管理
 subtitle: 具体的实现原理，巩固现代操作系统知识点
 layout: post
-tags: [linux, os]
+tags: [linux, os ,process]
 ---
 
 深入Linux内核架构学习笔记，具体的实现原理，巩固现代操作系统知识点。
@@ -2577,7 +2577,7 @@ In practice, both effects naturally happen simultaneously, but this does not inf
 
 ![](../img/linux-kernel-virtual-red-black.png)
 
-### Latency Tracking
+#### Latency Tracking
 
 The kernel has a built-in notion of what it considers a good scheduling latency, that is, the interval
 during which every runnable task should run at least once.
@@ -2634,13 +2634,798 @@ and this is also used to transfer the latency interval portion.
 Now we have everything in place to discuss the various methods that must be implemented by CFS to
 interact with the global scheduler.
 
-### 3. Queue Manipulation
+### 3. Queue Manipulation 队列操作
 
 Two functions are available to move elements to and from the run queue: `enqueue_task_fair` and
 `dequeue_task_fair`. Let us concentrate on placing new tasks on the run queue first.
 
-Besides `pointers` to the generic `run queue` and the `task structure` in question, the function accepts one
-more parameter: `wakeup`. This allows for specifying if the task that is enqueued has only recently been
+Besides `pointers` to the generic `run queue` and the `task structure` in question, the function accepts one more parameter: `wakeup`. This allows for specifying if the task that is enqueued has only recently been
 woken up and changed into the running state (wakeup is 1 in this case), or if it was runnable before
 (wakeup is 0 then). The code flow diagram for `enqueue_task_fair` is shown in Figure 2-20.
+
+![](../img/linux-kernel-queue-mani.png)
+
+Let us go back to `enqueue_entity`: After `place_entity` has determined the proper virtual run time for the process, it is placed on the red-black tree with `__enqueue_entity`. I have already noted before that this is a purely mechanical function that uses standard methods of the kernel to sort the task into the red-black tree.
+
+```c
+kernel/sched_fair.c
+static void
+place_entity(struct cfs_rq *cfs_rq, struct sched_entity *se, int initial)
+{
+    u64 vruntime;
+    vruntime = cfs_rq->min_vruntime;
+    if (initial)
+    		vruntime += sched_vslice_add(cfs_rq, se);
+    if (!initial) {
+        vruntime -= sysctl_sched_latency;
+        vruntime = max_vruntime(se->vruntime, vruntime);
+    }
+    se->vruntime = vruntime;
+}
+```
+
+Since the kernel has promised to run all active processes at least once within the current latency period, the `min_vruntime` of the queue is used as the base virtual time, and by subtracting `sysctl_sched_latency`, it is ensured that the newly awoken process will only run after the current latency period has been finished.
+
+### 3. 选择下一个Task
+
+Selecting the next task to run is performed in `pick_next_task_fair`. The code flow diagram is shown in Figure 2-21.
+
+If no tasks are currently runnable on the queue as indicated by an empty `nr_running counter`, there is little to do and the function can return immediately. Otherwise, the work is delegated to `pick_next_entity`.
+
+If a leftmost task is available in the tree, it can immediately be determined using the `first_fair` helper function, and `__pick_next_entity` extracts the `sched_entity` instance from the red-black tree. This is done using the container_of mechanism because the red-black tree manages instances of `rb_node` that are embedded in `sched_entitys`.
+
+Now the task has been selected, but some more work is required to mark it as the running task. This is handled by `set_next_entity`.
+
+```c
+kernel/sched_fair.c
+static void
+set_next_entity(struct cfs_rq *cfs_rq, struct sched_entity *se) {
+    /* ’current’ is not kept within the tree. */ 
+    if (se->on_rq) {
+    		__dequeue_entity(cfs_rq, se);
+    }
+...
+```
+
+<img src="../img/linux-kernel-next-task-fair.png" style="zoom:80%;" />
+
+The currently executing process is not kept on the run queue, so `__dequeue_entity` removes it from the red-black tree, setting the leftmost pointer to the next leftmost task if the current task has been the leftmost one. Notice that in our case, the process has been on the run queue for sure, but this need not be the case when `set_next_entity` is called from different places.
+
+Although the process is not contained in the red-black tree anymore, the connection between process and run queue is not lost, because `curr` marks it as the running one now:
+
+```c
+kernel/sched_fair.c
+
+cfs_rq->curr = se;
+ se->prev_sum_exec_runtime = se->sum_exec_runtime;
+
+}
+```
+
+Because the process is now the currently active one, the real time spent on the CPU will be charged to `sum_exec_runtime`, so the kernel preserves the previous setting in `prev_sum_exec_runtime`. Note that `sum_exec_runtime` is *not* reset in the process. The difference `sum_exec_runtime - prev_sum_ exec_runtime` does therefore denote the real time spent executing on a CPU.
+
+### 5. 处理周期性Tick
+
+This aforementioned 上述的 difference is important **when the periodic tick is handled.** The formally responsible function is `task_tick_fair`, but the real work is done in `entity_tick`. Figure 2-22 presents the code flow diagram.
+
+![](../img/linux-kernek-entity-tick.png)
+
+First of all, the statistics are always updated using `update_curr`. If the `nr_running` counter of the queue indicates that fewer than two processes are runnable on the queue, nothing needs to be done. **If a process is supposed to be preempted 可被抢占的, there needs to be at least another one that *could* preempt抢占 it.** Otherwise, the decision is left to `check_preempt_tick` 检测抢占时钟tick:
+
+```c
+kernel/sched_fair.c
+
+static void
+check_preempt_tick(struct cfs_rq *cfs_rq, struct sched_entity *curr) {
+
+    unsigned long ideal_runtime, delta_exec;
+
+    ideal_runtime = sched_slice(cfs_rq, curr);
+		delta_exec = curr->sum_exec_runtime - curr->prev_sum_exec_runtime;
+    if (delta_exec > ideal_runtime)
+				resched_task(rq_of(cfs_rq)->curr);
+  
+}
+```
+
+**The purpose of the function is to ensure that no process runs longer than specified by its share of the latency 等待周期 period.** This length of this share in real-time is computed in  `sched_slice`, and the real- time interval during which the process has been running on the CPU is given by `sum_exec_runtime`
+`-prev_sum_exec_runtime` as explained above. The preemption decision **抢占机制** is thus easy: **If the task has been running for longer than the desired time interval, a reschedule is requested with `resched_task`**. This sets the **TIF_NEED_RESCHED** flag in the `task` structure, and **the core scheduler** 核心调度器 will initiate a rescheduling at the next opportune moment.
+
+### 唤醒抢占
+
+**When tasks are woken up in `try_to_wake_up` and `wake_up_new_task`, the kernel uses `check_preempt_curr` to see if the new task can preempt the currently running one.** Notice that <u>the **core scheduler核心调度器** is **not involved** in this process</u>! For completely fair handled tasks, the function `check_ preempt_wakeup` performs the desired check.
+
+The newly woken task need not necessarily be handled by the completely fair scheduler. **If the new task is a real-time task, rescheduling is immediately requested because real-time tasks always preempt CFS tasks**:
+
+```c
+kernel/sched_fair.c
+
+static void check_preempt_wakeup(struct rq *rq, struct task_struct *p) {
+
+ struct task_struct *curr = rq->curr;
+ struct cfs_rq *cfs_rq = task_cfs_rq(curr);
+ struct sched_entity *se = &curr->se, *pse = &p->se;
+ unsigned long gran;
+//实时任务
+ if (unlikely(rt_prio(p->prio))) {
+   update_rq_clock(rq);
+   update_curr(cfs_rq);
+	 resched_task(curr);
+   return;
+ }
+ ...
+```
+
+The most convenient cases are **SCHED_BATCH** tasks — **they do not preempt other tasks by definition 不会抢占其他任务.**
+
+```c
+kernel/sched.c
+
+if (unlikely(p->policy == SCHED_BATCH))
+  return;
+...
+```
+
+**When a running task is preempted by a new task 正在跑的task被一个新的任务抢占, the kernel ensures that the old one has at least been running for a certain minimum amount of time.内核保证被抢占的task至少已经运行了一个最小的时间限额（不是随便抢占的哈）**。 
+
+The minimum is kept in `sysctl_sched_ wakeup_granularity`, which crossed our path before. Recall that it is **per default set to 4 ms**. This refers to real time 这个依赖于实时时间, so **the kernel first needs to convert it into virtual time if required**:转换为需要的虚拟时间
+
+```c
+kernel/sched_fair.c
+
+gran = sysctl_sched_wakeup_granularity;
+if (unlikely(se->load.weight != NICE_0_LOAD))
+		gran = calc_delta_fair(gran, &se->load);
+```
+
+If **the virtual run time of the currently executing task** (represented by its scheduling entity `se`) is larger than **the virtual run time of the new task** plus **the granularity 粒度** safety, a rescheduling is requested:
+
+```c
+kernel/sched_fair.c
+
+if (pse->vruntime + gran < se->vruntime)
+  resched_task(curr);
+}
+```
+
+**The added ‘‘buffer’’ time ensures that tasks are not switched too frequently so that not too much time is spent in context switching instead of doing real work**.
+
+### 处理新的Tasks
+
+**The last operation of the completely fair scheduler that we need to consider is the hook function that is called when new tasks are created: `task_new_fair`.** The behavior of the function is controllable with the parameter `sysctl_sched_child_runs_first`. **As the name might suggest, it determined if a newly created child process should run before the parent**. This is usually beneficial, especially if the child performs an exec system call afterward. The default setting is 1, but this can be changed via `/proc/sys/kernel/sched_child_runs_first`.
+
+Initially, the function performs the usual statistics update with `update_curr` and then employs the previously discussed place_entity:
+
+```c
+kernel/sched_fair.c
+
+static void task_new_fair(struct rq *rq, struct task_struct *p) {
+
+...
+
+  struct cfs_rq *cfs_rq = task_cfs_rq(p);
+  struct sched_entity *se = &p->se, *curr = cfs_rq->curr;
+  int this_cpu = smp_processor_id();
+
+  update_curr(cfs_rq);
+  place_entity(cfs_rq, se, 1);
+```
+
+In this case, `place_entity` is called with initial set to 1, which amounts to computing the initial vruntime with `sched_vslice_add`. Recall that this determines the portion of the latency interval that belongs to the process, but converted to virtual time. This is the scheduler’s initial debt to the process.
+
+```c
+kernel/sched_fair.c
+
+if (sysctl_sched_child_runs_first && curr->vruntime < se->vruntime) {
+  swap(curr->vruntime, se->vruntime);
+
+}
+
+enqueue_task_fair(rq, p, 0);
+resched_task(rq->curr);
+
+}
+```
+
+If **the virtual run time of the parent** (represented by `curr`) is less than the virtual run time of the child, this would mean that the parent runs before the child — recall that small virtual run times favor left positions in the red-black tree. If the child is supposed to run before the parent, the virtual run times of both need to be swapped.
+
+Afterward, the child is enqueued into the run queue as usual, and rescheduling is requested.
+
+
+
+## 实时调度类
+
+As mandated 被授权 by the POSIX standard, **Linux supports two real-time scheduling classes in addition to ‘‘normal‘‘ processes. T**he structure of the scheduler enables real-time processes to be integrated into the kernel without any changes in the core scheduler — this is a definitive advantage of scheduling classes.
+
+Now is a good place to recall some of the facts discussed a long time ago. Real-time processes can be identified by the fact that they have a *higher* priority than normal processes — accordingly, their `static_prio` value is always *lower* than that of normal processes, as shown in Figure 2-14. **The `rt_task` macro is provided to establish whether a given task is a real-time process or not by inspecting its priority, and `task_has_rt_policy` checks if the process is associated with a real-time scheduling policy.**
+
+### 1. 属性
+
+**Real-time processes** differ from **normal processes** in one essential way: If a real-time process exists in the system and is runnable, it will always be selected by the scheduler — unless there is another real-time process with a higher priority.
+
+The two available real-time classes differ as follows:
+
+❑  *Round robin* processes (**SCHED_RR**) have a time slice whose value is reduced when they run if they are normal processes. Once all time quantum have expired, the value is reset to the initial value, but the process is placed at the end of the queue. This ensures that if there are several SCHED_RR processes with the same priority, they are always executed in turn.
+
+❑  *First-in, first-out* processes (**SCHED_FIFO**) do not have a time slice and are permitted to run as long as they want once they have been selected.
+
+It is evident that the system can be rendered unusable by badly programmed real-time processes — all that is needed is an endless loop whose loop body never sleeps. Extreme care should therefore be taken when writing real-time applications.
+
+### 2. 数据结构
+
+```c
+kernel/sched-rt.c
+const struct sched_class rt_sched_class = {
+  .next = &fair_sched_class,
+	.enqueue_task = enqueue_task_rt,
+  .dequeue_task = dequeue_task_rt,
+  .yield_task = yield_task_rt,
+  
+  .check_preempt_curr = check_preempt_curr_rt,
+  
+  .pick_next_task = pick_next_task_rt,
+  .put_prev_task = put_prev_task_rt,
+  
+	.set_curr_task = set_curr_task_rt,
+  .task_tick = task_tick_rt,
+  };
+```
+
+
+
+The implementation of **the real-time scheduler class** is simpler than **the completely fair scheduler.** Only roughly 250 lines of code compared to 1,100 for CFS are required!
+
+The core run queue also contains a sub-run queue for real-time tasks as embedded instance of struct `rt_rq`:
+
+```c
+kernel/sched.c
+
+struct rq {
+  ...
+		t_rq rt;
+  ...
+}
+```
+
+The run queue is very straightforward — a linked list is sufficient:
+
+```c
+kernel/sched.c
+
+struct rt_prio_array {
+  DECLARE_BITMAP(bitmap, MAX_RT_PRIO+1);/* include 1 bit for delimiter */
+  struct list_head queue[MAX_RT_PRIO];
+
+};
+
+struct rt_rq {
+ struct rt_prio_array active;
+};
+```
+
+All real-time tasks with the same priority are kept in a linked list headed by `active.queue[prio]`, and the bitmap `active.bitmap` signals in which list tasks are present by a set bit. If no tasks are on the list, the bit is not set. Figure 2-23 illustrates the situation.
+
+![](../img/linux-kernal-real-time-run-queue.png)
+
+The analog of `update_cur` for the real-time scheduler class is` update_curr_rt`: The function keeps track of the time the current process spent executing on the CPU in `sum_exec_runtime`. **All calculations are performed with real times; virtual times are not required**. This simplifies things a lot.
+
+### 调度操作
+
+To enqueue and dequeue tasks is simple: The task is placed or respectively removed from the appropriate list selected by `array->queue` + `p->prio`, and **the corresponding bit in the `bitmap` is set if at least one task is present**, or removed if no tasks are left on the queue. Notice that new tasks are always queued at the end of each list.
+
+The two interesting operations are **how the next `task` is selected** and **how `preemption` is handled**. Consider `pick_next_task_rt`, which handles selection of the next task first. The code flow diagram is shown in Figure 2-24.
+
+![](../img/linux-kernel-rt-scheduler.png)
+
+`sched_find_first_bit` is a standard function that finds the first set bit in `active.bitmap` — this means that higher real-time priorities (which result in lower in-kernel priorities) are handled before lower real- time priorities. The first task on the selected list is taken out, and `se.exec_start` is set to the current real-time clock value of the run queue — that’s all that is required.
+
+The implementation of the periodic tick is likewise simple. **SCHED_FIFO** tasks are easiest to handle: They can run as long as they like and must pass control to another task explicitly by using the yield system call:
+
+```c
+kernel/sched.c
+
+static void task_tick_rt(struct rq *rq, struct task_struct *p)
+{
+
+update_curr_rt(rq);
+
+/*
+
+*RR tasks need a special form of timeslice management.
+
+*FIFO tasks have no timeslices. */
+ if (p->policy != SCHED_RR)
+		return;
+```
+
+If the current process is a round robin process, its time slice is decremented. When the time quantum
+ is not yet exceeded, nothing more needs to be done — the process can keep running. Once the counter reverts to 0, its value is renewed to **DEF_TIMESLICE**, which is set to `100 * HZ / 1000`, that is, 100 ms. If the task is not the only task in its list, it is requeued to the end. Rescheduling is requested as usual by setting the **TIF_NEED_RESCHED** flag with `set_tsk_need_resched`:
+
+```c
+kernel/sched-rt.c
+  if (--p->time_slice)
+    	return;
+  p->time_slice = DEF_TIMESLICE;
+  /*
+  * Requeue to the end of queue if we are not the only element
+  * on the queue: */
+  if (p->run_list.prev != p->run_list.next) {
+      requeue_task_rt(rq, p);
+      set_tsk_need_resched(p);
+  }
+}
+```
+
+The `sched_setscheduler` system call must be used to **convert a process into a real-time process**. This call is not discussed at length because it performs only the following simple tasks:
+
+❑  It removes the process from its current queue using `deactivate_task`.
+
+❑  It sets **the real-time priority** and **the scheduling class** in the `task` data structure.
+
+❑  It reactivates the task.
+
+<u>If **the process was not previously on any run queue**,</u> only **the scheduling class** and **the new priority value** need be set; **deactivation and reactivation are unnecessary**.
+
+Note that changing the scheduler class or priority is only possible without constraints if the `sched_setscheduler` system call is performed by a process with root rights (or, equivalently, the capability **CAP_SYS_NICE**). Otherwise, the following conditions apply:
+
+❑  **The scheduling class** can only be changed from **SCHED_NORMAL** to **SCHED_BATCH** or vice versa. A change to **SCHED_FIFO** is impossible.
+
+❑  Only **the priority of processes** with the same **UID** or **EUID** as the **EUID** of the caller can be changed. Additionally, the priority may only be decreased, but not increased.
+
+
+
+
+
+## 调度器增强
+
+So far, we have only considered scheduling on real-time systems — naturally, Linux can do slightly better. **Besides support for multiple CPUs, the kernel also provides several other enhancements that relate to scheduling, discussed in the following sections**. Notice that **these enhancements add much complexity to the scheduler**, so I will mostly consider simplified situations that illuminate the essential principle, but do not account for all boundary cases and scheduling oddities.
+
+### SMP 调度
+
+On multiprocessor systems, the kernel must consider a few additional issues in order to ensure good scheduling:
+
+❑  **The CPU load must be shared as fairly as possible over the available processors**. It makes little sense if one processor is responsible for three concurrent applicationswhile another has only the idle task to deal with. 如果一个processor负责三个并发应用， 
+
+❑  **The *affinity* 亲和性of a task to certain processors in the system must be selectable**. This makes it possible, for example, to bind a compute-intensive application to the first three CPUs on a 4-CPU system while the remaining (interactive) processes run on the fourth CPU.
+
+❑ **The kernel must be able to migrate processes from one CPU to another**. However, this option must be used with great care because it can severely impair performance. **CPU caches are the biggest problem on smaller SMP systems**. For *really* big systems, a CPU can be located literally some meters away from the memory previously used, so access to it will be very costly.
+
+The affinity of a task to particular CPUs is defined in the `cpus_allowed` element of the `task` structure specified above. Linux provides the` sched_setaffinity` system call to change this assignment.
+
+#### Extensions to the Data Structures
+
+The scheduling methods that **each scheduler class must provide are augmented by two additional functions** on SMP systems:
+
+```c
+<sched.h>
+
+struct sched_class {
+
+ ...
+ #ifdef CONFIG_SMP
+unsigned long (*load_balance) (struct rq *this_rq,
+                               int this_cpu,
+                               struct rq *busiest,
+                               unsigned long max_load_move,
+															 struct sched_domain *sd,
+                               enum cpu_idle_type idle,
+                               int *all_pinned,
+                               int *this_best_prio);
+
+int (*move_one_task) (struct rq *this_rq,
+                      int this_cpu,
+ 											struct rq *busiest,
+                      struct sched_domain *sd,
+											enum cpu_idle_type idle);
+
+ #endif ...
+ }
+
+
+```
+
+Despite their names, the functions are, however, not directly responsible to handle load balancing. **They are called by <u>the core scheduler</u> code whenever the kernel deems rebalancing necessary.** The scheduler class-specific functions then set up an iterator that allows the generic code to walk through all processes that are potential candidates to be moved to another queue, but the internal structures of the individual scheduler classes must *not* be exposed to the generic code because of the iterator. `load_balance` employs the generic function `load_balance`, while `move_one_task` uses `iter_move_one_task`. The functions serve different purposes:
+
+❑  <u>`iter_move_one_task` picks one `task` off the busy run queue busiest and moves it to the run queue of the current CPU</u>.
+
+❑  `load_balance` is allowed to <u>distribute multiple tasks from the busiest run queue to the current CPU</u>, but must not move more load than specified by `max_load_move`.
+
+**How is load balancing initiated?** <u>On SMP systems, the `scheduler_tick` **periodic scheduler** function invokes the `trigger_load_balance` function on completion of the tasks required for all systems as described above.</u> 
+
+This raises the **SCHEDULE_SOFTIRQ** softIRQ, guarantees that `run_rebalance_domains` will be run in due time. **This function finally invokes load balancing for the current CPU by calling `rebalance_domains`.** The time flow is illustrated in Figure 2-25.
+
+
+
+To perform rebalancing, the kernel needs some more information. Run queues are therefore augmented with additional fields on SMP systems:
+
+```c
+kernel/sched.c
+struct rq {
+...
+#ifdef CONFIG_SMP
+  struct sched_domain *sd;
+  /* For active balancing */
+  int active_balance;
+	int push_cpu;
+	/* cpu of this runqueue: */
+  int cpu;
+	struct task_struct *migration_thread;
+  struct list_head migration_queue;
+#endif
+  ...
+}
+```
+
+
+
+![load-balance](../img/linux-kernel-smp-load-balance.png)
+
+Run queues are CPU-specific, so `cpu` denotes the processor to which the run queue belongs. **The kernel provides one *migration thread* per run queue to which migration requests can be posted — they are kept on the list migration_queue.** 
+
+Such **requests usually originate from the scheduler itself**, but **can also become necessary when a process is restricted to a certain set of CPUs and must not run on the one it is currently executing on anymore.** 
+
+The kernel tries to balance run queues periodically, but if this fails to be satisfactory for a run queue, then active balancing must be used. `active_balance` is set to a nonzero value if this is required, and `cpu` notes the processor from which the request for active balancing initiates.
+
+Furthermore, **all run queues are organized in *scheduling domains*调度域**. 
+
+**This allows for grouping CPUs that are <u>physically adjacent</u> to each other or <u>share a common cache</u> such that processes should preferably be moved between them**. 
+
+On ‘‘normal’’ SMP systems, however, all processors will be contained in one scheduling domain. I will therefore not discuss this structure in detail, but only mention that it contains numerous parameters that can be set via `/proc/sys/kernel/cpuX/domainY`. These include the minimal and maximal time interval after which load balancing is initiated, the minimal imbalance for a queue to be re-balanced, and so on. Besides, the structure also manages fields that are set at run time and that allow the kernel to keep track when the last balancing operation has been performed, and when the next will take place.
+
+**So what does load_balance do?** 
+
+The function checks if enough time has elapsed since the last re-balancing operation, and initiates a new re-balancing cycle if necessary by invoking `load_balance`. The code flow diagram for this function is shown in Figure 2-26. Notice that I describe a simplified version because **the SMP scheduler** has to deal with a very large number of corner cases that obstruct the view on the essential actions.
+
+![](../img/linux-kernel-load-balance.png)
+
+First of all, **the function has to identify which queue has most work to do**. This task is delegated to `find_busiest_queue`, which is called for a specific run queue. The function iterates over the queues
+ of all processors (or, to be precise, of all processors in the current scheduling group) and compares their load weights. **The busiest queue is the queue with the largest value found in the end**.
+
+Once `find_busiest_queue` has identified a very busy queue, and if at least one task is running on this queue (load balancing will otherwise not make too much sense), a suitable number of its tasks are migrated to the current queue using `move_tasks`. This function, in turn, invokes the scheduler-class- specific `load_balance` method.
+
+When selecting potential migration candidates, the kernel must ensure that the process in question
+
+❑  is not running at the moment or has just finished running because **this fact would cancel out the benefits of <u>the CPU caches currently filled with the process data</u>**.
+
+❑  may execute on the processor associated with the current queue on the grounds of its CPU affinity .
+
+If balancing failed (e.g., because all tasks on the remote queue have a higher kernel-internal priority value, i.e., a lower nice priority), **the migration thread that is responsible for the busiest run queue is woken up.** To ensure that active load balancing is performed that is slightly more aggressive than the method tried now, **`load_balance` sets the `active_balance` flag of the busiest run queue** and **also notes the CPU from which the request originates in `rq->cpu`.**
+
+
+
+### 迁移线程
+
+The migration thread serves two purposes: It must **fulfill migration requests** originating from the scheduler, and **it is used to implement active balancing.** **This is handled in a kernel thread that executes `migration_thread`.** The code flow diagram for the function is shown in Figure 2-27.
+
+![](../img/linux-kernel-migration-thread.png)
+
+**`migration_thread` runs an infinite loop and sleeps when there is nothing to do**. 
+
+First of all, the function checks if active balancing is required, and if this is the case, `active_load_balance` is called to satisfy this request. 
+
+The function tries to move one task from the current run queue to the run queue of the CPU that initiated the request for active balancing. It uses `move_one_task` for this purpose, which, in turn, ends up calling the scheduler-class specific `move_one_task` functions of all scheduler classes until one of them succeeds. 
+
+Note that these functions try to move processes more aggressively than `load_balance`. For instance, they do not perform the previously mentioned priority comparison, so they are more likely to succeed.
+
+Once the active load balancing is finished, the migration thread checks if any migration requests from the scheduler are pending in the `migrate_req` list. If none is available, the thread can reschedule. Otherwise, the request is fulfilled with `__migrate_task`, which performs the desired process movement directly without further interaction with the scheduler classes.
+
+#### Core Scheduler Changes
+
+Besides the additions discussed above, some changes to the existing methods are required in the core scheduler on SMP systems. While numerous small details change all over the place, the most important differences as compared to uniprocessor systems are the following:
+
+❑  When a new process is started with the `exec` system call, a good opportunity for the scheduler to move the `task` across CPUs arises. Naturally, it has not been running yet, so there can not be any negative effects on the CPU cache by moving the task to another CPU. **`sched_exec` is the hook function invoked by the `exec` system call**, and the code flow diagram is shown in Figure 2-28.
+
+**`sched_balance_self` picks the CPU that is currently least loaded (and on which the process is also allowed to run).** If this is not the current CPU, then `sched_migrate_task` forwards an according migration request to the migration thread using `sched_migrate_task`.
+
+❑  The **scheduling granularity**调度的粒度 of **the completely fair scheduler** scales with the number of CPUs. The more processors present in the system, the larger the granularities that can be employed.处理器越多，粒度越大。 Both `sysctl_sched_min_granularity` and `sysctl_sched_latency` for `sysctl_sched_min_granularity` are multiplied by the correction factor **1 + log2(`nr_cpus`)**, where `nr_cpus` represents the number of available CPUs. However, they must not exceed 200 ms. `sysctl_sched_ wakeup_granularity` is also increased by the factor, but is not bounded from above.
+
+![](../img/linux-kernel-sched-exec.png)
+
+### 调度域和控制组 Scheduling Domains and Control Groups
+
+In the previous discussion of the scheduler code, we have often come across the situation that the scheduler does not deal directly with processes, but with *schedulable entities*. This allows for implementing *group scheduling*: **Processes are placed into different groups, and the scheduler is first fair among these groups and then fair among all processes in the group.** 
+
+This allows, for instance, granting identical shares of the available CPU time to each user. **Once the scheduler has decided how much time each user gets, the determined interval is then distributed between the users’ processes in a fair manner**. This naturally implies that the more processes a user runs, the less CPU share each process will get. **The amount of time for the user in total is not influenced by the number of processes, though**.
+
+Grouping tasks between users is not the only possibility.
+
+**The kernel also offers *control groups*,** which allow — via the special filesystem cgroups — creating arbitrary collections of tasks, which may even be sorted into multiple hierarchies. The situation is illustrated in Figure 2-29.
+
+![](../img/linux-kernel-group-scheduling.png)
+
+To reflect the hierarchical situation within the kernel, struct `sched_entity` is augmented with an element that allows for expressing this hierarchy:
+
+```c
+<sched.h>
+
+struct sched_entity {
+...
+ #ifdef CONFIG_FAIR_GROUP_SCHED
+		struct sched_entity *parent;
+		...
+ #endif
+...
+}
+```
+
+This substructure of scheduling entities must be considered by all scheduling-class-related operations. Consider, for instance, how the code to enqueue a task in the completely fair scheduler really looks:
+
+```c
+kernel/sched_fair.c
+
+static void enqueue_task_fair(struct rq *rq, struct task_struct *p, int wakeup) {
+
+ struct cfs_rq *cfs_rq;
+ struct sched_entity *se = &p->se;
+
+ for_each_sched_entity(se) {
+   if (se->on_rq)
+			break;
+ 	 cfs_rq = cfs_rq_of(se);
+   enqueue_entity(cfs_rq, se, wakeup);
+   wakeup = 1;
+ }
+}
+```
+
+`for_each_sched_entity` traverses the scheduling hierarchy defined by the parent elements of `sched_entity`, and each entity is enqueued on the run queue.
+
+Notice that `for_each_sched_entity` will resolve to a trivial loop that executes the code contained in the loop body exactly once when support for group scheduling is not selected, so the behavior described in the previous discussion is regained.
+
+### 内核抢占和低延迟的相关工作
+
+Let us now turn our attention to **kernel preemption**, which allows for a smoother experience of the sys- tem, especially in multimedia environments. Closely related are low latency efforts performed by the kernel, which I will discuss afterward.
+
+
+
+#### 内核抢占
+
+**the scheduler is invoked before returning to user mode after system calls or at certain designated points in the kernel.** This ensures that the kernel, unlike user processes, cannot be interrupted unless it explicitly wants to be. This behavior can be problematic 导致问题 if the kernel is in the middle of a relatively long operation — this may well be the case with filesystem, or `memory-management- related` tasks. The kernel is executing on behalf of a specific process for a long amount of time, and other processes do not get to run in the meantime. This may result in deteriorating导致 system latency, which users experience as ‘‘sluggish‘‘ response. Video and audio dropouts may also occur in multimedia applications if they are denied CPU time for too long.
+
+These problems can be resolved by compiling the kernel with support for *kernel preemption*. This allows not only userspace applications but also the kernel to be interrupted if a high-priority process has some things to do. Keep in mind that kernel preemption and preemption of userland tasks by other userland tasks are two different concepts!
+
+**Kernel preemption** was added during the development of kernel 2.5. Although astonishingly few changes were required to make the kernel preemptible, the mechanism is not as easy to implement as preemption of tasks running in userspace.
+
+ If the kernel cannot complete certain actions in a single operation — manipulation of data structures, for instance — *race conditions* may occur and render the system inconsistent. The same problems arise on multiprocessor systems discussed in Chapter 5.
+
+The kernel may not be interrupted at all points. Fortunately, most of these points have already been identified by SMP implementation, and this information can be reused to implement kernel preemption. Problematic sections of the kernel that may only be accessed by one processor at a time are protected by so-called *spinlocks*: The first processor to arrive at a dangerous (also called critical) region acquires the lock, and releases the lock once the region is left again. Another processor that wants to access the region in the meantime has to wait until the first user has released the lock. Only then can it acquire the lock and enter the dangerous region.
+
+If the kernel can be preempted, even uniprocessor systems will behave like SMP systems. **Consider that the kernel is working inside a critical region when it is preempted.** **The next task also operates in kernel mode, and unfortunately also wants to access the same critical region**. This is effectively equivalent to two processors working in the critical region at the same time and must be prevented. Every time the kernel is inside a critical region, kernel preemption must be disabled.
+
+How does the kernel keep track of whether it can be preempted or not? Recall that each task in the system is equipped with an architecture-specific instance of struct `thread_info`. The structure also includes a *preemption counter*:
+
+```c
+<asm-arch/thread_info.h>
+
+struct thread_info {
+  ...
+	int preempt_count; /* 0 => preemptable, <0 => BUG */
+  ...
+}
+```
+
+The value of this element determines whether the kernel is currently at a position where it may be interrupted. **If `preempt_count` is zero, the kernel can be interrupted**, otherwise not. The value must not be manipulated 修改 directly, but only with the auxiliary functions `dec_preempt_count` and `inc_preempt_count`, which, respectively, decrement and increment the counter.` inc_preempt_count` is invoked each time the kernel enters an important area where preemption is forbidden. When this area is exited, `dec_ preempt_count` decrements the value of the preemption counter by 1. Because the kernel can enter some important areas via different routes — particularly via nested routes — a simple Boolean variable would not be sufficient for `preempt_count`. When multiple dangerous regions are entered one after another, it must be made sure that *all* of them have been left before the kernel can be preempted again.
+
+The `dec_preempt_count` and `inc_preempt_count` calls are integrated in the synchronization operations for SMP systems (see Chapter 5). They are, in any case, already present at all relevant points of the kernel so that **the preemption mechanism** can make best use of them simply by reusing the existing infrastructure.
+
+Some more routines are provided for preemption handling:
+
+- ❑  preempt_disable disables preemption by calling inc_preempt_count. Additionally, the com- piler is instructed to avoid certain memory optimizations that could lead to problems with the preemption mechanism.
+
+- ❑  preempt_check_resched checks if scheduling is necessary and does so if required.
+
+- ❑  preempt_enable enables kernel preemption, and additionally checks afterward if rescheduling
+
+  is necessary with preempt_check_resched.
+
+- ❑  preempt_disable_no_resched disables preemption, but does not reschedule.
+
+
+
+How does the kernel know if preemption is required? First of all, the **TIF_NEED_RESCHED** flag must be set to signalize that a process is waiting to get CPU time. This is honored by `preempt_ check_resched`:
+
+```c
+<preempt.h>
+
+#define preempt_check_resched() 
+do { 
+
+	if (unlikely(test_thread_flag(TIF_NEED_RESCHED)))
+    preempt_schedule(); 
+
+} while (0)
+```
+
+Recall that the function is called when preemption is re-enabled after it had been disabled, so this
+ is a good time to check if a process wants to preempt the currently executing kernel code. If this
+ is the case, it should be done as quickly as possible — without waiting for the next routine call of the scheduler.
+
+The central function for the preemption mechanism is `preempt_schedule`. The simple desire that the kernel be preempted as indicated by **TIF_NEED_RESCHED** does not yet guarantee that this is *possible* — recall that the kernel could currently still be inside a critical region, and must not be disturbed. This is checked by `preempt_reschedule`:
+
+```c
+kernel/sched.c
+
+asmlinkage void __sched preempt_schedule(void) {
+
+struct thread_info *ti = current_thread_info();
+/*
+*  If there is a non-zero preempt_count or interrupts are disabled,
+*  we do not want to preempt the current task. Just return.. */
+
+if (unlikely(ti->preempt_count || irqs_disabled()))
+  return;
+
+
+```
+
+If **the preemption counter** is greater than 0, then preemption is still disabled, and consequently the kernel may not be interrupted — the function terminates immediately. Neither is preemption possible if the kernel has disabled hardware IRQs at important points where processing must be completed in a single operation. irqs_disabled checks whether interrupts are disabled or not, and if they are disabled, the kernel must not be preempted.
+
+The following steps are required if preemption is possible:
+
+```c
+kernel/sched.c
+
+do {
+
+	add_preempt_count(PREEMPT_ACTIVE);
+  schedule();
+
+  sub_preempt_count(PREEMPT_ACTIVE);
+  /*
+  * Check again in case we missed a preemption opportunity * between schedule and now.
+  */
+
+} while(unlikely(test_thread_flag(TIF_NEED_RESCHED)));
+```
+
+Before the scheduler is invoked, the value of the preemption counter is set to **PREEMPT_ACTIVE**.
+
+This sets a flag bit in the preemption counter that has such a large value that it is never affected by the regular preemption counter increments as illustrated by Figure 2-30. It indicates to the `schedule` function that scheduling was not invoked in the normal way but as a result of a kernel preemption. 
+
+After the kernel has rescheduled, code flow returns to the current task — possibly after some time has elapsed, because the preempting task will have run in between — the flag bit is removed again.
+
+![](../img/linux-kernel-per-process-preemption-counter.png)
+
+
+
+```c
+kernel/sched.c
+asmlinkage void __sched schedule(void) {
+  ...
+  if (prev->state && !(preempt_count() & PREEMPT_ACTIVE)) {
+    if (unlikely((prev->state & TASK_INTERRUPTIBLE) && unlikely(signal_pending(prev)))) {
+      prev->state = TASK_RUNNING;
+    } else {
+      deactivate_task(rq, prev, 1);
+    }
+  }
+  ...
+}
+```
+
+
+
+This ensures that the next task is selected as quickly as possible without the hassle of deactivating the current one. If a high-priority task is waiting to be scheduled, it will be picked by the scheduler class and will be allowed to run.
+
+This method is only one way of triggering kernel preemption. Another possibility to activate preemption is after a hardware IRQ has been serviced. If the processor returns to kernel mode after handling the IRQ (return to user mode is not affected), the architecture-specific assembler routine checks whether the value of the preemption counter is 0 — that is, if preemption is allowed — and whether the reschedule flag
+
+is set — exactly as in preempt_schedule. If both conditions are satisfied, the scheduler is invoked, this time via preempt_schedule_irq to indicate that the preemption request originated from IRQ context. The essential difference between this function and preempt_schedule is that preempt_schedule_irq is called with IRQs disabled to prevent recursive calls for simultaneous IRQs.
+
+As a result of the methods described in this section, a kernel with enabled preemption is able to replace processes with more urgent ones faster than a normal kernel could.
+
+
+
+#### 低延迟Low Latency
+
+Naturally, the kernel is interested in providing good latency times even if kernel preemption is not enabled. This can, for instance, be important in network servers. While the overhead introduced by kernel preemption is not desired in such an environment, the kernel should nevertheless respond to important events with reasonable speed. If, for example, a network request comes in that needs to be serviced by a daemon, then this should not be overly long delayed by some database doing heavy I/O operations. I have already discussed a number of measures offered by the kernel to reduce this problem: scheduling latency in CFS and kernel preemption. Real-time mutexes as discussed in Chapter 5 also aid in solving the problem, but there is one more scheduling-related action that can help.
+
+**Basically, long operations in the kernel should not occupy the system completely. Instead, they should check from time to time if another process has become ready to run, and thus call the scheduler to select the process. This mechanism is independent of kernel preemption and will reduce latency also if the kernel is built without explicit preemption support.**
+
+The function to initiate conditional rescheduling is `cond_resched`. It is implemented as follows:
+
+```c
+kernel/sched.c
+int __sched cond_resched(void) {
+  if (need_resched() && !(preempt_count() & PREEMPT_ACTIVE))
+    __cond_resched();
+    return 1;
+  }
+  return 0;
+}
+```
+
+
+
+need_resched checks if the TIF_NEED_RESCHED flag is set, and the code additionally ensures that the ker- nel is not currently being preempted already34 and rescheduling is thus allowed. Should both conditions be fulfilled, then __cond_resched takes care of the necessary details to invoke the scheduler.
+
+How can cond_resched be used? As an example, consider the case in which the kernel reads in memory pages associated with a given memory mapping. This could be done in an endless loop that terminates after all required data have been read:
+
+```c
+for (;;)
+ /* Read in data */
+
+if (exit_condition)
+	continue;
+```
+
+
+
+**If a large number of read operations is required**, this can consume a sizeable amount of time. Since the process runs in kernel space, it will not be deselected by the scheduler as in the userspace case, taken that kernel preemption is not enabled. This can be improved by calling `cond_resched` in every loop iteration:
+
+```c
+for (;;)
+  cond_resched();
+
+  /* Read in data */
+  if (exit_condition)
+    continue;
+```
+
+The kernel has been carefully audited to find the longest-running functions, and calls to cond_resched have been put in the appropriate places. This ensures higher responsiveness even without explicit kernel preemption.
+
+Following a long-time tradition for Unix kernels, Linux has supported task states for both interruptible and uninterruptible sleeps. During the 2.6.25 development cycle, however, another state was added: **TASK_KILLABLE**. 
+
+Tasks in this state are sleeping and do not react to non-fatal signals, but can — incontrast to **TASK_UNINTERRUPTIBLE** — be killed by fatal signals. At the time of writing, almost all places in the kernel that would provide apt possibilities for killable sleeps are still waiting to be converted to the new form.
+
+The scheduler has seen a comparatively large number of cleanups during the development of kernels 2.6.25 and 2.6.26. A new feature added during this period is real-time group scheduling. This means that real-time tasks can now also be handled by the group scheduling framework introduced in this chapter.
+
+Additionally, the scheduler documentation was moved into the dedicated directory Documentation/ scheduler/, and obsolete files documenting the old O(1) scheduler have been removed. Documentation on real-time group scheduling can be found in Documentation/scheduler/sched-rt-group.txt.
+
+### 总结
+
+Linux is a multiuser and multitasking operating system, and thus has to manage multiple processes from multiple users. In this chapter, you have learned that processes are a very important and fundamental abstraction of Linux. The data structure used to represent individual processes has connections with nearly every subsystem of the kernel.
+
+You have seen how Linux implements the traditional fork/exec model inherited from Unix to create new processes that are hierarchically related to their parent, and have also been introduced to Linux- specific extensions to the traditional Unix model in the form of namespaces and the clone system call. Both allow for fine-tuning how a process perceives the system, and which resources are shared between parent and child processes. Explicit methods that enable otherwise separated processes to communicate are discussed in Chapter 5.
+
+Additionally, you have seen how the available computational resources are distributed between pro- cesses by the scheduler. Linux supports pluggable scheduling modules, and these are used to implement completely fair and POSIX soft real-time scheduling policies. The scheduler decides when to switch between which tasks, and is augmented by architecture-specific routines to implement the context switch- ing proper.
+
+Finally, I have discussed how the scheduler must be augmented to service systems with multiple CPUs, and how kernel preemption and low-latency modifications make Linux handle time-constrained situa- tions better.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
