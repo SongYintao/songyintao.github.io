@@ -5,7 +5,7 @@ layout: post
 tags: [service mesh]
 ---
 
-写在前面，我们要搞的是远洋巨舰，而不是小沟里面的小帆船。:passenger_ship:
+写在前面，我们要搞的是远洋巨舰，而不是小沟里面的小帆船。   :passenger_ship:
 
 ## 背景
 
@@ -22,7 +22,7 @@ service mesh的好处不用多说了，简单介绍关键几点：
 
 有了 Service Mesh 之后，我们就可以把 SDK 中的大部分能力从应用中剥离出来，拆解为独立进程，以 Sidecar 的模式部署。通过将服务治理能力下沉到基础设施，可以让业务更加专注于业务逻辑，中间件团队则更加专注于各种通用能力，真正实现独立演进，透明升级，提升整体效率。
 
-![img](https://static001.infoq.cn/resource/image/c2/f5/c2ea4258aa86f0fdb97b5c13df4729f5.png)
+![img](../img/c2ea4258aa86f0fdb97b5c13df4729f5.png)
 
 
 
@@ -38,7 +38,7 @@ service mesh的好处不用多说了，简单介绍关键几点：
 
 这篇文章讲的很好，结合当前的技术背景，如何丝滑的将ServiceMesh落地，还是需要考虑很多问题的。
 
-![Service Mesh 在『路口』的产品思考与实践：务实是根本](https://static001.infoq.cn/resource/image/2d/50/2d11455e71b2a724f8910e743f951850.png)
+![Service Mesh 在『路口』的产品思考与实践：务实是根本](../img/2d11455e71b2a724f8910e743f951850.png)
 
 
 
@@ -61,7 +61,7 @@ service mesh的好处不用多说了，简单介绍关键几点：
 
 
 
-![Service Mesh 在『路口』的产品思考与实践：务实是根本](https://static001.infoq.cn/resource/image/98/54/9867726e6104c606fcf97b8b41283d54.png)
+![Service Mesh 在『路口』的产品思考与实践：务实是根本](../img/9867726e6104c606fcf97b8b41283d54.png)
 
 ​																			独立的服务注册中心
 
@@ -78,7 +78,7 @@ service mesh的好处不用多说了，简单介绍关键几点：
   - Pilot 是一个被 Mixer 掩盖的重灾区：长期以来大家的性能关注点都在 Mixer，表现糟糕而且问题明显的 Mixer 一直在吸引火力。但是当选择放弃 Mixer（典型如官方在 Istio 新版本中提供的关闭 Mixer 的配置开关）之后，Pilot 的性能问题也就很快浮出水面；
   - 我们实践下来发现 Pilot 目前主要有两大问题：1）无法支撑海量数据 2）每次变化都会触发全量推送，性能较差；
 
-![Service Mesh 在『路口』的产品思考与实践：务实是根本](https://static001.infoq.cn/resource/image/de/5c/de0028818b58f8beab5f63245c514c5c.png)
+![Service Mesh 在『路口』的产品思考与实践：务实是根本](../img/de0028818b58f8beab5f63245c514c5c.png)
 
 
 
@@ -104,7 +104,7 @@ service mesh的好处不用多说了，简单介绍关键几点：
 
 ## 1. 云原生：Istio mesh =envoy+Istio
 
-![Service Mesh 在『路口』的产品思考与实践：务实是根本](https://static001.infoq.cn/resource/image/fd/a2/fdef27f837a5d85223e99be8afeb1fa2.png)
+![Service Mesh 在『路口』的产品思考与实践：务实是根本](../img/fdef27f837a5d85223e99be8afeb1fa2.png)
 
 ### 1. 数据平面：Envoy 
 
@@ -130,13 +130,13 @@ service mesh的好处不用多说了，简单介绍关键几点：
 
 下面这张图大家在了解 Service Mesh 的时候可能都看到过，每个方块代表一个服务的示例，例如 Kubernetes 中的一个 Pod（其中包含了 sidecar proxy），xDS 协议控制了 Istio Service Mesh 中所有流量的具体行为，即将下图中的方块链接到了一起。
 
-![Service Mesh 示意图](https://ws1.sinaimg.cn/large/006tNc79ly1fz73xstibij30b409cmyh.jpg)
+![Service Mesh 示意图](../img/006tNc79ly1fz73xstibij30b409cmyh.png)
 
 xDS 协议是由 [Envoy](https://envoyproxy.io/) 提出的，在 Envoy v2 版本 API 中最原始的 xDS 协议只指 CDS、EDS、LDS 和 RDS。
 
 下面我们以两个 service，每个 service 都有两个实例的例子来看下 Envoy 的 xDS 协议。
 
-![Envoy xDS 协议](https://ws4.sinaimg.cn/large/006tNc79ly1fz7auvvrjnj30s80j8gn6.jpg)
+![Envoy xDS 协议](../img/006tNc79ly1fz7auvvrjnj30s80j8gn6.png)
 
 上图中的箭头不是流量在进入 Enovy Proxy 后的路径或路由，而是想象的一种 Envoy 中 xDS 接口处理的顺序并非实际顺序，其实 xDS 之间也是有交叉引用的。
 
@@ -191,7 +191,7 @@ Istio 服务网格逻辑上分为数据平面和控制平面。
 **数据平面**：由一组以 sidecar 方式部署的智能代理（Envoy）组成。这些代理可以调节和控制微服务及 Mixer 之间所有的网络通信。
 **控制平面**：负责管理和配置代理来路由流量。此外控制平面配置 Mixer 以实施策略和收集遥测数据。
 
-![img](https://img-blog.csdnimg.cn/2018122417153052.jpeg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3pob25nbGluemhhbmc=,size_16,color_FFFFFF,t_70)
+![img](../img/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3pob25nbGluemhhbmc=,size_16,color_FFFFFF,t_70.png)
 
 
 
@@ -214,7 +214,7 @@ Pilot 将平台特定的服务发现机制抽象化并将其合成为符合 Envo
 **Envoy API**：下发服务发现、流量规则到envoy上
 **Rules API**：由运维人员管理。可通过API配置高级管理规则。
 
-![img](https://img-blog.csdnimg.cn/20190114110009349.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3pob25nbGluemhhbmc=,size_16,color_FFFFFF,t_70)
+![img](../img/watermark,type_ZmFuZ3poZW5na.png)
 
 #### Citadel
 
@@ -228,7 +228,7 @@ Pilot 将平台特定的服务发现机制抽象化并将其合成为符合 Envo
 
 ### 1. 整体架构
 
-![图2. 蚂蚁金服 Service Mesh 示意架构](https://cdn.nlark.com/yuque/0/2019/png/226702/1574056558297-1ee1945c-3903-4695-add9-76d5d9febf34.png)
+![图2. 蚂蚁金服 Service Mesh 示意架构](../img/1574056558297-1ee1945c-3903-4695-add9-76d5d9febf34.png)
 
 **SofaMOSN**：本质上是基于Envoy的golang实现+二次开发支持自定义功能。
 
@@ -240,11 +240,11 @@ Pilot 将平台特定的服务发现机制抽象化并将其合成为符合 Envo
 
 SOFAMosn 作为底层的高性能安全网络代理，支撑了阿里的 RPC，MSG，GATEWAY 等业务场景。
 
-![业务支持](https://cdn.nlark.com/yuque/0/2019/png/226702/1573700732603-2044a13c-fc2d-4c4f-a153-80a70aaa9129.png)
+![业务支持](../img/1573700732603-2044a13c-fc2d-4c4f-a153-80a70aaa9129.png)
 
 **最终落地架构（云原生）：**
 
-![图4. Service Mesh 落地架构](https://cdn.nlark.com/yuque/0/2019/png/226702/1574056558302-93bd5a33-ce66-46ed-9162-fd75d4fb27d1.png)
+![图4. Service Mesh 落地架构](../img/1574056558302-93bd5a33-ce66-46ed-9162-fd75d4fb27d1.png)
 
 **产品层能力说明（个人理解）：**
 
@@ -260,9 +260,9 @@ SOFAMosn 作为底层的高性能安全网络代理，支撑了阿里的 RPC，M
 
 本质上基于Envoy的golang实现的二次开发。实现了自定义的需求：安全、多协议等。
 
-![img](https://raw.githubusercontent.com/servicemesher/website/master/content/blog/sofa-mosn-deep-dive/0069RVTdgy1ftvchpmtzoj31kw0zkq9h.jpg)
+![img](../img/0069RVTdgy1ftvchpmtzoj31kw0zkq9h.png)
 
-![img](https://raw.githubusercontent.com/servicemesher/website/master/content/blog/sofa-mosn-deep-dive/0069RVTdgy1ftvcj3iaa9j31kw0zkn5w.jpg)
+![img](../img/0069RVTdgy1ftvcj3iaa9j31kw0zkn5w.png)
 
 ## 控制面：SOFAMesh
 
@@ -284,7 +284,7 @@ SOFAMosn 作为底层的高性能安全网络代理，支撑了阿里的 RPC，M
 
 要具备规模化能力，横向扩展能力是基础。Pilot 的访问方式我们采用常用的 DNSRR 方案，Sidecar 随机访问 Pilot  实例。由于是长连接访问，所以在扩容时，原有的连接没有重连，会造成负载不均。为解决这个问题，我们给 Pilot  增加了连接限流、熔断、定期重置连接功能，并配合 Sidecar 散列重连逻辑，避免产生连接风暴。
 
-![负载均衡](https://cdn.nlark.com/yuque/0/2019/png/226702/1577255490618-8e049c0e-cb7b-4830-845c-b531912e2a67.png)
+![负载均衡](../img/1577255490618-8e049c0e-cb7b-4830-845c-b531912e2a67.png)
 
 - 连接限流
 
@@ -306,7 +306,7 @@ SOFAMosn 作为底层的高性能安全网络代理，支撑了阿里的 RPC，M
 
 规模化的另一道难题是怎么保证服务的性能。在 Pilot 的场景，我们最关注的当然是配置下发的时效性了。性能优化离不开细节，其中部分优化是通用的，也有部分优化是面向业务场景定制的，接下来会分享下我们优化的一些细节点。
 
-![image.png](https://cdn.nlark.com/yuque/0/2019/png/226702/1577255490648-b9ccb31f-81c4-4a42-8954-83469670ac2d.png)
+![image.png](../img/1577255490648-b9ccb31f-81c4-4a42-8954-83469670ac2d.png)
 
 - 首次请求优化
 
@@ -338,7 +338,7 @@ SOFAMosn 作为底层的高性能安全网络代理，支撑了阿里的 RPC，M
 
 而对于配置准确性验证是相对比较复杂的，因为配置的准确性需要依赖 Sidecar 和 Pilot 的配置双方进行检验，因此我们在控制面里引入了 Inspector 组件，定位于配置巡检，版本扫描等运维相关功能模块。
 
-![image.png](https://cdn.nlark.com/yuque/0/2019/png/226702/1577255490653-292f136f-69b3-4044-b281-6bf927ac9cea.png)
+![image.png](../img/1577255490653-292f136f-69b3-4044-b281-6bf927ac9cea.png)
 
 配置巡检的流程如下：
 
@@ -359,11 +359,11 @@ SOFAMosn 作为底层的高性能安全网络代理，支撑了阿里的 RPC，M
 
 我们先来看看架构图，请看图：
 
-![证书方案架构图](https://cdn.nlark.com/yuque/0/2019/png/226702/1577272171978-01eabe3a-aaf4-4a6b-8155-f49e6ae6e0d5.png)
+![证书方案架构图](../img/1577272171978-01eabe3a-aaf4-4a6b-8155-f49e6ae6e0d5.png)
 
 对整体架构有个大致理解后，我们分解下 Sidecar 获取证书的流程，一图胜千言，再上图：
 
-![ Sidecar 获取证书的流程](https://cdn.nlark.com/yuque/0/2019/png/226702/1577272163126-2ffee84d-f773-4100-9189-f8339ffc92da.png)
+![ Sidecar 获取证书的流程](../img/1577272163126-2ffee84d-f773-4100-9189-f8339ffc92da.png)
 
 补充说明下图中的每一步环节：
 
@@ -384,7 +384,7 @@ SOFAMosn 作为底层的高性能安全网络代理，支撑了阿里的 RPC，M
 
 在落地过程中，仅依靠社区的 PERMISSIVE TLS MODE 还不能满足蚂蚁金服可灰度、可监控、可应急的三板斧要求。所以在社区方案的基础上，引入 Pod 粒度的 Sidecar 范围选择能力（也是基于 ScopeConfig ），方案基本如下图所示：
 
-![国密通信方案](https://cdn.nlark.com/yuque/0/2019/png/226702/1577255490665-036b6bea-f686-4c4f-a4ea-3854337c92d3.png)
+![国密通信方案](../img/1577255490665-036b6bea-f686-4c4f-a4ea-3854337c92d3.png)
 
 流程如下：
 
@@ -411,7 +411,7 @@ Citadel Agent 通过 Citadel 去同步 POD 及 CRD 等信息，虽然避免了 N
 
 ## 3. 美团点评OCTO2.0
 
-![img](https://p1.meituan.net/travelcube/611e1dd413fbc033d40a6746b7f1719b237219.png)
+![img](../img/611e1dd413fbc033d40a6746b7f1719b237219.png)
 
 
 
@@ -431,7 +431,7 @@ Citadel Agent 通过 Citadel 去同步 POD 及 CRD 等信息，虽然避免了 N
 - **能应对超大规模的挑战，技术方案务必能确保支撑当前量级甚至当前N倍的增量，系统自身也不能成为整个治理体系的瓶颈。**
 - **尽量与社区保持亲和，一定程度上与社区协同演进**。
 
-![img](https://p0.meituan.net/travelcube/16c66c49c48ff4d2c6d8e410336598eb124183.png)
+![img](../img/16c66c49c48ff4d2c6d8e410336598eb124183.png)
 
 
 
@@ -446,7 +446,7 @@ Citadel Agent 通过 Citadel 去同步 POD 及 CRD 等信息，虽然避免了 N
 
 ### OCTO Mesh 架构设计
 
-![img](https://p0.meituan.net/travelcube/f9a9ab0876435522a8226eef61d42ac1396029.png)
+![img](../img/f9a9ab0876435522a8226eef61d42ac1396029.png)
 
 上面这张图展示了 OCTO Mesh 的整体架构。从下至上来看，逻辑上分为业务进程及通信框架 SDK 层、数据平面层、控制平面层、治理体系协作的所有周边生态层。
 
@@ -457,7 +457,7 @@ Citadel Agent 通过 Citadel 去同步 POD 及 CRD 等信息，虽然避免了 N
 - 为了提升效率同时减少人为错误，我们独立**建设了 OCTO Proxy 管理系统**，**部署在每个实例上的 LEGO Agent 负责 OCTO Proxy 的保活和热升级，类似于 Istio 的 Pilot Agent，这种方式可以将人工干预降到较低，提升运维效率。**
 - **数据面与控制面通过双向流式通信。**路由部分交互方式是增强语义的 xDS，增强语义是因为当前的 xDS 无法满足美团更复杂的路由需求；除路由外，该通道承载着众多的治理功能的指令及配置下发，我们设计了一系列的自定义协议。
 
-![img](https://p1.meituan.net/travelcube/45ac85c1e4f562d3986d926f60e65838419981.png)
+![img](../img/45ac85c1e4f562d3986d926f60e65838419981.png)
 
 控制面（内部名字是Adcore）自研为主，整体分为：Adcore Pilot、Adcore Dispatcher、集中式健康检查系统、节点管理模块、监控预警模块。此外独立建设了统一元数据管理及 Mesh 体系内的服务注册发现系统 Meta Server 模块。每个模块的具体职责如下：
 
@@ -481,7 +481,7 @@ Citadel Agent 通过 Citadel 去同步 POD 及 CRD 等信息，虽然避免了 N
 
 
 
-![img](https://p1.meituan.net/travelcube/4c2ffc3c833e1505aeaa42f5290ffc03251141.png)
+![img](../img/4c2ffc3c833e1505aeaa42f5290ffc03251141.png)
 
 对于社区 Istio 方案，要想实现超大规模应用集群落地，需要完成较多的技术改造。主要是因为 Istio 水平扩展能力相对薄弱，内部冗余操作较多，整体稳定性建设较为薄弱。
 
@@ -491,7 +491,7 @@ Citadel Agent 通过 Citadel 去同步 POD 及 CRD 等信息，虽然避免了 N
 - 当出现机房断网等异常情况时，可以应对瞬时流量骤增的能力。
 - 只做必要的 P2P 模式健康检查，配合集中式健康检查进行百万级节点管理。
 
-![img](https://p0.meituan.net/travelcube/a1200d9e06b886e1f3c7748898f0c168509420.png)
+![img](../img/a1200d9e06b886e1f3c7748898f0c168509420.png)
 
 按需加载和数据分片主要由 Adcore Pilot 配合 Meta Server 实现。
 
@@ -507,7 +507,7 @@ Pilot 的逻辑架构分为 SessionMgr、Snapshot、Diplomat 三个部分：
 
 答案是 Meta Server，自己实现控制面机器服务发现的同时精细化控制路由规则，从而在应用层面实现了数据分片。
 
-![img](https://p0.meituan.net/travelcube/bd0a0d7ffe36435fa1e51a83621aecfb362075.png)
+![img](../img/bd0a0d7ffe36435fa1e51a83621aecfb362075.png)
 
 Meta Server 管控每个Pilot节点负责应用 OCTO Proxy的归属关系。
 
@@ -519,7 +519,7 @@ Meta Server 管控每个Pilot节点负责应用 OCTO Proxy的归属关系。
 
 对于关注节点特别多的应用 OCTO Proxy，也可以独立部署 Pilot，通过 Meta Server 统一进行路由管理。
 
-![img](https://p1.meituan.net/travelcube/cc6d13ee3639f4ef4efd9d6582bd3208449611.png)
+![img](../img/cc6d13ee3639f4ef4efd9d6582bd3208449611.png)
 
 Mesh体系的命名服务需要 Pilot 与注册中心打通，常规的实现方式如左图所示（以 Zookeeper为例），每个 OCTO Proxy 与 Pilot 建立会话时，**作为客户端角色会向注册中心订阅自身所关注的服务端变更监听器**，假设这个服务需要访问100个应用，则至少需要注册100个 Watcher 。假设该应用存在1000个实例同时运行，就会注册 100*1000 = 100000 个 Watcher，超过1000个节点的应用在美团内部还是蛮多的。
 
@@ -539,13 +539,13 @@ Snapshot 内部又划分为3层：
 
 对于刚刚提到的场景，隔离一层后1000个节点仅需注册100个 Watcher，一个 Watcher 变更后仅会有一条变更信息到 Data Cache 层，再根据索引向1000个 OCTO Proxy 通知，从而极大的降低了注册中心及 Pilot 的负载。
 
-![img](https://p0.meituan.net/travelcube/4db20bbc32ef733e9cd9cd39fd04aaaa419064.png)
+![img](../img/4db20bbc32ef733e9cd9cd39fd04aaaa419064.png)
 
 Snapshot 层除了减少不必要交互提升性能外，也会将计算后的数据格式化缓存下来，一方面瞬时大量相同的请求会在快照层被缓存挡住，另一方面也便于将存在关联的数据统一打包到一起，避免并发问题。这里参考了Envoy-Control-Plane的设计，Envoy-Control-Plane会将包含xDS的所有数据全部打包在一起，而我们是将数据隔离开，如路由、鉴权完全独立，当路由数据变更时不会去拉取并更新鉴权信息。
 
 **预加载主要目的是提升服务冷启动性能，Meta Server 的路由规则由我们制定，所以这里提前在 Pilot 节点中加载好最新的数据，当业务进程启动时，Proxy 就可以立即从 Snapshot 中获取到数据，避免了首次访问慢的问题。**
 
-![img](https://p0.meituan.net/travelcube/b136a56e6c76f035f369f718eec86e00316444.png)
+![img](../img/b136a56e6c76f035f369f718eec86e00316444.png)
 
 Istio 默认每个 Envoy 代理对整个集群中所有其余 Envoy 进行 P2P 健康检测，当集群有N个节点时，一个检测周期内（往往不会很长）就需要做N的平方次检测，另外当集群规模变大时所有节点的负载就会相应提高，这都将成为扩展部署的极大障碍。
 
@@ -616,7 +616,7 @@ Istio 默认每个 Envoy 代理对整个集群中所有其余 Envoy 进行 P2P �
 
 在数据面上，我们使用了自研的 MOSN，不仅支持 SOFA 应用，同时也支持 Dubbo 和 Spring Cloud 应用。在部署模式上，我们不仅支持容器 /K8s，同时也支持虚拟机场景。
 
-![Service Mesh 在『路口』的产品思考与实践：务实是根本](https://static001.infoq.cn/resource/image/6f/7d/6fd2a8e735a71fc4a1761d493cbd6c7d.png)
+![Service Mesh 在『路口』的产品思考与实践：务实是根本](../img/6fd2a8e735a71fc4a1761d493cbd6c7d.png)
 
 ### 大规模场景下的服务发现
 
@@ -624,7 +624,7 @@ Istio 默认每个 Envoy 代理对整个集群中所有其余 Envoy 进行 P2P �
 
 所以，我们的方案是保留独立的 SOFA 服务注册中心来支持千万级的服务实例信息和秒级推送，业务应用通过直连 Sidecar 来实现服务注册和发现。
 
-![Service Mesh 在『路口』的产品思考与实践：务实是根本](https://static001.infoq.cn/resource/image/ff/54/ffa095664abc0c73c443b673005c0654.png)
+![Service Mesh 在『路口』的产品思考与实践：务实是根本](../img/ffa095664abc0c73c443b673005c0654.png)
 
 ###  流量劫持
 
@@ -639,7 +639,7 @@ Service Mesh 中另一个重要的话题就是如何实现流量劫持：使得�
 - 调用端的 Sidecar 会向 SOFA 服务注册中心发起服务订阅请求，告知需要订阅的服务信息；
 - SOFA 服务注册中心向调用端的 Sidecar 推送服务地址 (1.2.3.4:20881)；
 
-![Service Mesh 在『路口』的产品思考与实践：务实是根本](https://static001.infoq.cn/resource/image/7f/06/7fe0f0453ff3dee7de00420337625906.png)
+![Service Mesh 在『路口』的产品思考与实践：务实是根本](../img/7fe0f0453ff3dee7de00420337625906.png)
 
 经过上述的服务发现过程，流量劫持就显得非常自然了：
 
@@ -647,7 +647,7 @@ Service Mesh 中另一个重要的话题就是如何实现流量劫持：使得�
 - 调用端的 Sidecar 接收到请求后，通过解析请求头，可以得知具体要调用的服务信息，然后获取之前从服务注册中心返回的地址后就可以发起真实的调用 (1.2.3.4:20881)；
 - 服务端的 Sidecar 接收到请求后，经过一系列处理，最终会把请求发送给服务端 (127.0.0.1:20880)；
 
-![Service Mesh 在『路口』的产品思考与实践：务实是根本](https://static001.infoq.cn/resource/image/61/6c/619a46a424bec66f3bcfaacc07aaba6c.png)
+![Service Mesh 在『路口』的产品思考与实践：务实是根本](../img/619a46a424bec66f3bcfaacc07aaba6c.png)
 
 可能会有人问，为啥不采用 iptables 的方案呢？主要的原因是一方面 iptables 在规则配置较多时，性能下滑严重，另一个更为重要的方面是它的管控性和可观测性不好，出了问题比较难排查。
 
@@ -661,23 +661,23 @@ Service Mesh 中另一个重要的话题就是如何实现流量劫持：使得�
 
 以一个服务为例，初始有一个服务提供者，有一个服务调用者。
 
-![Service Mesh 在『路口』的产品思考与实践：务实是根本](https://static001.infoq.cn/resource/image/0e/3e/0e5b03ed68e26fc10e679542df17ca3e.png)
+![Service Mesh 在『路口』的产品思考与实践：务实是根本](../img/0e5b03ed68e26fc10e679542df17ca3e.png)
 
 **2. 透明迁移调用方**
 
 在我们的方案中，对于先迁移调用方还是先迁移服务方没有任何要求，这里假设调用方希望先迁移到 Service Mesh 上，那么只要在调用方开启 Sidecar 的注入即可，服务方完全不感知调用方是否迁移了。所以调用方可以采用灰度的方式一台一台开启 Sidecar，如果有问题直接回滚即可。
 
-![Service Mesh 在『路口』的产品思考与实践：务实是根本](https://static001.infoq.cn/resource/image/4e/c4/4e223eb7326a24637b1a7b65746651c4.png)
+![Service Mesh 在『路口』的产品思考与实践：务实是根本](../img/4e223eb7326a24637b1a7b65746651c4.png)
 
 **3. 透明迁移服务方**
 
 假设服务方希望先迁移到 Service Mesh 上，那么只要在服务方开启 Sidecar 的注入即可，调用方完全不感知服务方是否迁移了。所以服务方可以采用灰度的方式一台一台开启 Sidecar，如果有问题直接回滚即可。
 
-![Service Mesh 在『路口』的产品思考与实践：务实是根本](https://static001.infoq.cn/resource/image/ce/33/ce1483c6b67d4545a5b619e58654a133.png)
+![Service Mesh 在『路口』的产品思考与实践：务实是根本](../img/ce1483c6b67d4545a5b619e58654a133.png)
 
 **4. 终态**
 
-![Service Mesh 在『路口』的产品思考与实践：务实是根本](https://static001.infoq.cn/resource/image/7a/57/7a19636d2384b1b330aba00d34ef8357.png)
+![Service Mesh 在『路口』的产品思考与实践：务实是根本](../img/7a19636d2384b1b330aba00d34ef8357.png)
 
 
 
@@ -725,7 +725,7 @@ Service Mesh 中另一个重要的话题就是如何实现流量劫持：使得�
 - 那么，可以在物理机的agent里面实现servicemesh的功能，将这些灰区的服务整合到整个mesh当中，提升mesh的价值。做到承上启下的关键作用。
 - nile功能需要丰富一下，支持mesh的功能。
 
-![Dapr Conceptual Model](https://github.com/dapr/dapr/raw/master/img/dapr_conceptual_model.jpg)
+![Dapr Conceptual Model](../img/dapr_conceptual_model.png)
 
 ### 提出的要求
 
