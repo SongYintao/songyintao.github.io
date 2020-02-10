@@ -499,9 +499,9 @@ root@test-a3-60-14:/etc/cni/net.d# ip addr
        
 ##选择eno3,创建vlan 96,启动macvlan eno3.9
 
-root@test-a3-60-14:/etc/cni/net.d# ip link set eno3 promisc on
-root@test-a3-60-14:/etc/cni/net.d# ip link add link eno1 name eno1.96 type vlan id 96
-root@test-a3-60-14:~/k8s# ip link set eno1.96 up
+root@test-a3-60-14:/etc/cni/net.d# ip link set bond0 promisc on
+root@test-a3-60-14:/etc/cni/net.d# ip link add link bond0 name bond0.96 type vlan id 96
+root@test-a3-60-14:~/k8s# ip link set bond0.96 up
 root@test-a3-60-14:~/k8s#
 root@test-a3-60-14:~/k8s# ip addr
 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
@@ -644,7 +644,7 @@ ip link del cni0
 ##### 待加入节点加入集群
 
 ```shell
-kubeadm join --node-name 192.168.33.14 --token c37yve.mi8qkk388dytv6ct 192.168.60.83:6443 --discovery-token-unsafe-skip-ca-verification
+kubeadm join --node-name 192.168.60.130 --token c37yve.mi8qkk388dytv6ct 192.168.60.83:6443 --discovery-token-unsafe-skip-ca-verification
 
 
 
@@ -738,62 +738,97 @@ root@test-a3-60-14:/lib/systemd/system# systemctl start node_exporter.service
 
 ### kubernetes 节点
 
-| 物理节点      | 网段         | 是否可用       | 静态ip |
-| ------------- | ------------ | -------------- | ------ |
-| 192.168.60.13 | 172.31.200.x |                |        |
-| 192.168.60.14 | 172.31.201.x |                |        |
-| 192.168.60.15 | 172.31.202.x |                |        |
-| 192.168.60.16 | 172.31.203.x |                |        |
-| 192.168.60.17 | 172.30.200.x |                | Y      |
-| 192.168.60.18 | 172.31.204.x | N              |        |
-| 192.168.60.19 | 172.31.205.x |                |        |
-| 192.168.60.20 | 172.31.206.x | N              |        |
-| 192.168.60.21 | 172.31.207.x |                |        |
-| 192.168.60.22 | 198          |                |        |
-| 192.168.60.27 | 208          |                |        |
-| 192.168.60.28 | 209          |                |        |
-| 192.168.60.29 | 199          | N              |        |
-|               |              |                |        |
-| 192.168.60.30 | 172.31.210.x |                |        |
-| 192.168.60.31 | 172.31.211.x |                |        |
-| 192.168.60.32 | 172.31.212.x |                |        |
-| 192.168.60.33 | 172.31.213.x |                |        |
-| 192.168.60.34 | 172.31.214.x |                |        |
-| 192.168.60.35 | 172.31.215.x |                |        |
-| 192.168.60.36 | 172.31.216.x | N  linux有问题 |        |
-| 192.168.60.   |              | eno3.96        |        |
-| 192.168.60.83 | master       |                |        |
-| 192.168.60.86 | 172.31.217   | eno1.96        |        |
-| 192.168.60.87 | 172.31.218   |                |        |
-| 192.168.60.88 | 172.31.219   |                |        |
-| 192.168.60.89 | coredns      |                |        |
-| 192.168.60.90 | 172.31.220   |                |        |
-| 192.168.60.91 | 172.31.221   |                |        |
-| 192.168.60.92 | 172.31.222   |                |        |
-| 192.168.60.93 | 172.31.223   |                |        |
-| 192.168.60.94 | 172.31.224   |                |        |
-| 192.168.60.95 | 172.31.225   |                |        |
-| 192.168.60.96 | 172.31.226   |                |        |
-| 192.168.60.97 | 172.31.227   |                |        |
-| 192.168.60.98 | 172.31.228   |                |        |
-| 192.168.60.99 | 172.31.229   |                |        |
-| 100           | 230          |                |        |
-| 192.168.33.12 | 172.28.4.x   |                |        |
-| 192.168.33.13 | 172.28.2.x   |                |        |
-| 192.168.33.14 | 172.28.3     |                |        |
-| 192.168.33.15 | 172.28.5     |                |        |
-| 192.168.33.16 | 172.28.8     |                |        |
-| 192.168.33.17 | 172.28.6     | n              |        |
-| 192.168.33.18 | 172.28.10    |                |        |
-| 192.168.33.19 | 172.28.7     |                |        |
-| 192.168.33.20 | 172.28.9     |                |        |
-| 192.168.33.21 | 172.28.11    |                |        |
-| 192.168.33.22 | 172.28.22    |                |        |
-| 192.168.33.23 | 172.28.23    |                |        |
-| 192.168.33.24 | 172.28.24    |                |        |
-| 192.168.33.25 | 172.28.25    |                |        |
-|               |              |                |        |
-|               |              |                |        |
+| 物理节点       | 网段         | 是否可用       | 静态ip |
+| -------------- | ------------ | -------------- | ------ |
+| 192.168.60.13  | 172.31.200.x |                |        |
+| 192.168.60.14  | 172.31.201.x |                |        |
+| 192.168.60.15  | 172.31.202.x |                |        |
+| 192.168.60.16  | 172.31.203.x |                |        |
+| 192.168.60.17  | 172.30.200.x |                | Y      |
+| 192.168.60.18  | 172.31.204.x | N              |        |
+| 192.168.60.19  | 172.31.205.x |                |        |
+| 192.168.60.20  | 172.31.206.x | N              |        |
+| 192.168.60.21  | 172.31.207.x |                |        |
+| 192.168.60.22  | 198          |                |        |
+| 192.168.60.27  | 208          |                |        |
+| 192.168.60.28  | 209          |                |        |
+| 192.168.60.29  | 199          | N              |        |
+|                |              |                |        |
+| 192.168.60.30  | 172.31.210.x |                |        |
+| 192.168.60.31  | 172.31.211.x |                |        |
+| 192.168.60.32  | 172.31.212.x |                |        |
+| 192.168.60.33  | 172.31.213.x |                |        |
+| 192.168.60.34  | 172.31.214.x |                |        |
+| 192.168.60.35  | 172.31.215.x |                |        |
+| 192.168.60.36  | 172.31.216.x | N  linux有问题 |        |
+| 192.168.60.    |              | eno3.96        |        |
+| 192.168.60.83  | master       |                |        |
+| 192.168.60.86  | 172.31.217   | eno1.96        |        |
+| 192.168.60.87  | 172.31.218   |                |        |
+| 192.168.60.88  | 172.31.219   |                |        |
+| 192.168.60.89  | coredns      |                |        |
+| 192.168.60.90  | 172.31.220   |                |        |
+| 192.168.60.91  | 172.31.221   |                |        |
+| 192.168.60.92  | 172.31.222   |                |        |
+| 192.168.60.93  | 172.31.223   |                |        |
+| 192.168.60.94  | 172.31.224   |                |        |
+| 192.168.60.95  | 172.31.225   | yunxiao        |        |
+| 192.168.60.96  | 172.31.226   | yunxiao        |        |
+| 192.168.60.97  | 172.31.227   | xdcs           |        |
+| 192.168.60.98  | 172.31.228   | xdcs           |        |
+| 192.168.60.99  | 172.31.229   | xdcs           |        |
+| 100            | 230          |                |        |
+| 192.168.33.12  | 172.28.4.x   |                |        |
+| 192.168.33.13  | 172.28.2.x   |                |        |
+| 192.168.33.14  | 172.28.3     |                |        |
+| 192.168.33.15  | 172.28.5     |                |        |
+| 192.168.33.16  | 172.28.8     |                |        |
+| 192.168.33.17  | 172.28.6     | n              |        |
+| 192.168.33.18  | 172.28.10    |                |        |
+| 192.168.33.19  | 172.28.7     |                |        |
+| 192.168.33.20  | 172.28.9     |                |        |
+| 192.168.33.21  | 172.28.11    |                |        |
+| 192.168.33.22  | 172.28.22    |                |        |
+| 192.168.33.23  | 172.28.23    |                |        |
+| 192.168.33.24  | 172.28.24    |                |        |
+| 192.168.33.25  | 172.28.25    |                |        |
+| 192.168.60.127 | 172.31.231   |                |        |
+| 192.168.60.129 | 172.31.233   |                |        |
+| 192.168.60.130 | 172.31.234   |                |        |
+| 192.168.60.128 | 172.31.232   |                |        |
+| 192.168.60.131 | 172.31.235   |                |        |
+| 192.168.60.134 | 172.31.238   |                |        |
+
+
+
+
+
+```
+{
+	"cniVersion": "0.3.1",
+	"name": "macnet",
+	"type": "macvlan",
+	"master": "enp175s0f0.96",
+	"ipam": {
+
+	"type": "host-local",
+		"ranges": [
+			[
+				{
+					"subnet": "172.31.1.0/16",
+					"rangeStart": "172.31.238.20",
+					"rangeEnd": "172.31.238.255",
+					"gateway": "172.31.0.1"
+				}
+			]
+
+		],
+		"routes": [
+			{ "dst": "0.0.0.0/0" }
+		]
+	}
+}
+```
 
 
 
@@ -1139,45 +1174,287 @@ kubectl taint nodes 192.168.60.17 ipam=static-ipam:NoSchedule
 
 
 
-192.168.33.12   Ready     <none>    253d      v1.11.0
-192.168.33.13   Ready     <none>    9d        v1.11.0
-192.168.33.14   Ready     <none>    253d      v1.11.0
-192.168.33.15   Ready     <none>    49d       v1.11.0
-192.168.33.16   Ready     <none>    253d      v1.11.0
-192.168.33.17   Ready     <none>    38d       v1.11.0
-192.168.33.18   Ready     <none>    253d      v1.11.0
-192.168.33.19   Ready     <none>    253d      v1.11.0
-192.168.33.20   Ready     <none>    253d      v1.11.0
-192.168.33.21   Ready     <none>    253d      v1.11.0
-192.168.33.22   Ready     <none>    59d       v1.11.0
-192.168.33.23   Ready     <none>    42d       v1.11.0
-192.168.33.24   Ready     <none>    42d       v1.11.0
-192.168.33.25   Ready     <none>    18d       v1.11.0
-192.168.60.13   Ready     <none>    105d      v1.11.0
-192.168.60.14   Ready     <none>    102d      v1.11.0
-192.168.60.15   Ready     <none>    102d      v1.11.0
-192.168.60.16   Ready     <none>    100d      v1.11.0
-192.168.60.17   Ready     <none>    93d       v1.11.0
-192.168.60.19   Ready     <none>    80d       v1.11.0
-192.168.60.20   Ready     <none>    73d       v1.11.0
-192.168.60.21   Ready     <none>    78d       v1.11.0
-192.168.60.22   Ready     <none>    75d       v1.11.0
-192.168.60.27   Ready     <none>    65d       v1.11.0
-192.168.60.28   Ready     <none>    65d       v1.11.0
-192.168.60.29   Ready     <none>    64d       v1.11.0
-192.168.60.30   Ready     <none>    74d       v1.11.0
-192.168.60.32   Ready     <none>    71d       v1.11.0
-192.168.60.33   Ready     <none>    67d       v1.11.0
-192.168.60.34   Ready     <none>    66d       v1.11.0
-192.168.60.35   Ready     <none>    65d       v1.11.0
-192.168.60.83   Ready     master    253d      v1.11.0
-192.168.60.86   Ready     <none>    64d       v1.11.0
-192.168.60.87   Ready     <none>    64d       v1.11.0
-192.168.60.88   Ready     <none>    64d       v1.11.0
-192.168.60.90   Ready     <none>    64d       v1.11.0
-192.168.60.91   Ready     <none>    64d       v1.11.0
-192.168.60.92   Ready     <none>    64d       v1.11.0
-192.168.60.93   Ready     <none>    63d       v1.11.0
-192.168.60.94   Ready     <none>    63d       v1.11.0
-192.168.60.95   Ready     <none>    63d       v1.11.0
-192.168.60.96   Ready     <none>    22h       v1.11.0
+## CentOs
+
+
+
+修改yum.repo
+
+```shell
+mkdir /opt/centos-yum.bak
+mv /etc/yum.repos.d/* /opt/centos-yum.bak/
+
+
+cat /etc/redhat-release
+cd /etc/yum.repos.d/
+
+vim CentOS-Base.repo
+
+# CentOS-Base.repo
+#
+# The mirror system uses the connecting IP address of the client and the
+# update status of each mirror to pick mirrors that are updated to and
+# geographically close to the client.  You should use this for CentOS updates
+# unless you are manually picking other mirrors.
+#
+# If the mirrorlist= does not work for you, as a fall back you can try the
+# remarked out baseurl= line instead.
+#
+#
+
+[base]
+name=CentOS-$releasever - Base - mirrors.aliyun.com
+failovermethod=priority
+baseurl=http://mirrors.aliyun.com/centos/7/os/$basearch/
+        http://mirrors.aliyuncs.com/centos/7/os/$basearch/
+        http://mirrors.cloud.aliyuncs.com/centos/7/os/$basearch/
+gpgcheck=1
+gpgkey=http://mirrors.aliyun.com/centos/RPM-GPG-KEY-CentOS-7
+
+#released updates
+[updates]
+name=CentOS-$releasever - Updates - mirrors.aliyun.com
+failovermethod=priority
+baseurl=http://mirrors.aliyun.com/centos/7/updates/$basearch/
+        http://mirrors.aliyuncs.com/centos/7/updates/$basearch/
+        http://mirrors.cloud.aliyuncs.com/centos/7/updates/$basearch/
+gpgcheck=1
+gpgkey=http://mirrors.aliyun.com/centos/RPM-GPG-KEY-CentOS-7
+
+#additional packages that may be useful
+[extras]
+name=CentOS-$releasever - Extras - mirrors.aliyun.com
+failovermethod=priority
+baseurl=http://mirrors.aliyun.com/centos/7/extras/$basearch/
+        http://mirrors.aliyuncs.com/centos/7/extras/$basearch/
+        http://mirrors.cloud.aliyuncs.com/centos/7/extras/$basearch/
+gpgcheck=1
+gpgkey=http://mirrors.aliyun.com/centos/RPM-GPG-KEY-CentOS-7
+
+#additional packages that extend functionality of existing packages
+[centosplus]
+name=CentOS-$releasever - Plus - mirrors.aliyun.com
+failovermethod=priority
+baseurl=http://mirrors.aliyun.com/centos/7/centosplus/$basearch/
+        http://mirrors.aliyuncs.com/centos/7/centosplus/$basearch/
+        http://mirrors.cloud.aliyuncs.com/centos/7/centosplus/$basearch/
+gpgcheck=1
+enabled=0
+gpgkey=http://mirrors.aliyun.com/centos/RPM-GPG-KEY-CentOS-7
+
+#contrib - packages by Centos Users
+[contrib]
+name=CentOS-$releasever - Contrib - mirrors.aliyun.com
+failovermethod=priority
+baseurl=http://mirrors.aliyun.com/centos/7/contrib/$basearch/
+        http://mirrors.aliyuncs.com/centos/7/contrib/$basearch/
+        http://mirrors.cloud.aliyuncs.com/centos/7/contrib/$basearch/
+gpgcheck=1
+enabled=0
+gpgkey=http://mirrors.aliyun.com/centos/RPM-GPG-KEY-CentOS-7
+
+
+
+vim docker-ce.repo
+
+[docker-ce-stable]
+name=Docker CE Stable - $basearch
+baseurl=https://mirrors.aliyun.com/docker-ce/linux/centos/7/$basearch/stable
+enabled=1
+gpgcheck=1
+gpgkey=https://mirrors.aliyun.com/docker-ce/linux/centos/gpg
+
+[docker-ce-stable-debuginfo]
+name=Docker CE Stable - Debuginfo $basearch
+baseurl=https://mirrors.aliyun.com/docker-ce/linux/centos/7/debug-$basearch/stable
+enabled=0
+gpgcheck=1
+gpgkey=https://mirrors.aliyun.com/docker-ce/linux/centos/gpg
+
+[docker-ce-stable-source]
+name=Docker CE Stable - Sources
+baseurl=https://mirrors.aliyun.com/docker-ce/linux/centos/7/source/stable
+enabled=0
+gpgcheck=1
+gpgkey=https://mirrors.aliyun.com/docker-ce/linux/centos/gpg
+
+[docker-ce-edge]
+name=Docker CE Edge - $basearch
+baseurl=https://mirrors.aliyun.com/docker-ce/linux/centos/7/$basearch/edge
+enabled=0
+gpgcheck=1
+gpgkey=https://mirrors.aliyun.com/docker-ce/linux/centos/gpg
+
+[docker-ce-edge-debuginfo]
+name=Docker CE Edge - Debuginfo $basearch
+baseurl=https://mirrors.aliyun.com/docker-ce/linux/centos/7/debug-$basearch/edge
+enabled=0
+gpgcheck=1
+gpgkey=https://mirrors.aliyun.com/docker-ce/linux/centos/gpg
+
+[docker-ce-edge-source]
+name=Docker CE Edge - Sources
+baseurl=https://mirrors.aliyun.com/docker-ce/linux/centos/7/source/edge
+enabled=0
+gpgcheck=1
+gpgkey=https://mirrors.aliyun.com/docker-ce/linux/centos/gpg
+
+[docker-ce-test]
+name=Docker CE Test - $basearch
+baseurl=https://mirrors.aliyun.com/docker-ce/linux/centos/7/$basearch/test
+enabled=0
+gpgcheck=1
+gpgkey=https://mirrors.aliyun.com/docker-ce/linux/centos/gpg
+
+[docker-ce-test-debuginfo]
+name=Docker CE Test - Debuginfo $basearch
+baseurl=https://mirrors.aliyun.com/docker-ce/linux/centos/7/debug-$basearch/test
+enabled=0
+gpgcheck=1
+gpgkey=https://mirrors.aliyun.com/docker-ce/linux/centos/gpg
+
+[docker-ce-test-source]
+name=Docker CE Test - Sources
+baseurl=https://mirrors.aliyun.com/docker-ce/linux/centos/7/source/test
+enabled=0
+gpgcheck=1
+gpgkey=https://mirrors.aliyun.com/docker-ce/linux/centos/gpg
+
+[docker-ce-nightly]
+name=Docker CE Nightly - $basearch
+baseurl=https://mirrors.aliyun.com/docker-ce/linux/centos/7/$basearch/nightly
+enabled=0
+gpgcheck=1
+gpgkey=https://mirrors.aliyun.com/docker-ce/linux/centos/gpg
+
+[docker-ce-nightly-debuginfo]
+name=Docker CE Nightly - Debuginfo $basearch
+baseurl=https://mirrors.aliyun.com/docker-ce/linux/centos/7/debug-$basearch/nightly
+enabled=0
+gpgcheck=1
+gpgkey=https://mirrors.aliyun.com/docker-ce/linux/centos/gpg
+
+[docker-ce-nightly-source]
+name=Docker CE Nightly - Sources
+baseurl=https://mirrors.aliyun.com/docker-ce/linux/centos/7/source/nightly
+enabled=0
+gpgcheck=1
+gpgkey=https://mirrors.aliyun.com/docker-ce/linux/centos/gpg
+
+
+
+wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
+yum clean all
+yum makecache
+yum list
+yum update
+yum install -y yum-utils device-mapper-persistent-data lvm2
+yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+yum update
+yum install docker-ce-17.12.1.ce-1.el7.centos -y
+
+cat <<EOF > /etc/yum.repos.d/kubernetes.repo
+[kubernetes]
+name=Kubernetes
+baseurl=http://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64
+enabled=1
+gpgcheck=0
+repo_gpgcheck=0
+gpgkey=http://mirrors.aliyun.com/kubernetes/yum/doc/yum-key.gpg
+       http://mirrors.aliyun.com/kubernetes/yum/doc/rpm-package-key.gpg
+EOF
+  yum update -y
+    yum install -y  kubelet-1.11.0
+    yum install -y  kubectl-1.11.0
+    yum install -y  kubeadm-1.11.0
+    kubeadm reset
+  systemctl stop firewalld
+    systemctl disable firewalld
+    setenforce 0
+    vi /etc/selinux/config
+    vi /etc/sysctl.d/k8s.conf
+    modprobe br_netfilter
+    sysctl -p /etc/sysctl.d/k8s.conf
+   swapoff -a
+   vim /etc/fstab
+   vi /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+net.ipv4.ip_forward = 1
+vm.swappiness=0
+
+   
+sysctl -p /etc/sysctl.d/k8s.conf
+systemctl enable docker.service
+systemctl enable kubelet.service
+systemctl daemon-reload
+systemctl start docker
+   
+   
+    /sbin/iptables --policy INPUT ACCEPT
+    /sbin/iptables --policy FORWARD ACCEPT
+    /sbin/iptables --policy OUTPUT ACCEPT
+    /sbin/iptables --flush
+    iptables -X
+    iptables -F
+    iptables -Z
+    iptables -X -t nat
+    iptables -F -t nat
+    iptables -Z -t nat
+    
+    
+    
+    ip a
+    ip link set enp175s0f0 promisc on
+    ip a
+    ip link add link enp175s0f0 name enp175s0f0.96 type vlan id 96
+    ip link set enp175s0f0.96 up
+```
+
+
+
+```
+[Unit]
+Description=Docker Application Container Engine
+Documentation=http://docs.docker.com
+After=network.target docker.socket
+
+[Service]
+Type=notify
+WorkingDirectory=/usr/local/bin
+ExecStart=/usr/bin/dockerd \
+                --registry-mirror=http://192.168.60.8 \
+                --insecure-registry 192.168.60.8 \
+                -H tcp://127.0.0.1:4243 \
+                -H unix:///var/run/docker.sock \
+                --selinux-enabled=false \
+                $DOCKER_STORAGE \
+                $DOCKER_LOG \
+                $DOCKER_OTHERS
+
+ExecReload=/bin/kill -s HUP $MAINPID
+# Having non-zero Limit*s causes performance problems due to accounting overhead
+# in the kernel. We recommend using cgroups to do container-local accounting.
+LimitNOFILE=infinity
+LimitNPROC=infinity
+LimitCORE=infinity
+# Uncomment TasksMax if your systemd version supports it.
+# Only systemd 226 and above support this version.
+#TasksMax=infinity
+TimeoutStartSec=0
+# set delegate yes so that systemd does not reset the cgroups of docker containers
+Delegate=yes
+# kill only the docker process, not all processes in the cgroup
+KillMode=process
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+
+
+```
+kubeadm join --node-name 192.168.60.134 --token c37yve.mi8qkk388dytv6ct 192.168.60.83:6443 --discovery-token-unsafe-skip-ca-verification
+```
+
