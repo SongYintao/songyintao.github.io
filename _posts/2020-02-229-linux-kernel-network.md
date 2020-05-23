@@ -951,7 +951,172 @@ struct tcphdr{
 
 ![](../img/linux-kernel-network-tcp-v4-recv.png)
 
-在对分组数据进行各种检查并将首部中的信息复制到套接字缓冲区的控制块之后，内核将查找等待该分组的套接字的工作委托给__inet_lookup函数。该函数的唯一作用就是调用另外两个函数，扫面各种散列表。
+在对分组数据进行各种检查并将首部中的信息复制到套接字缓冲区的控制块之后，内核将查找等待该分组的套接字的工作委托给__inet_lookup函数。该函数的唯一作用就是调用另外两个函数，扫描各种散列表。`inet_lookup_established` 试图返回一个一连接的套接字。如果没有找到合适的结构，则调用 `inet_look_listener` 函数检查所有的监听套接字。
+
+在两种情况下，这些函数合并考虑了对应连接的各种不同因素，通过散列函数来查找一个前面说的sock类型实例。在搜索监听套接字时，会针对与通配符匹配的几个套接字，应用计分方法来查找最佳的候选者。
+
+在找到对应的sock实例之后，工作才刚刚开始。取决于连接的状态，按照状态迁移。tcp_v4_do_rcv是一个多路分解器，基于套接字状态将代码控制流划分到不同的分支。
+
+
+
+#### 3. 三次握手
+
+在使用TCP链路之前，必须在客户端和主机之间显示的建立连接。主动active和被动passive连接的建立方式是有区别的。
+
+内核在连接建立之前，客户端进程的套接字状态为CLOSED，服务端套接字的状态为LISTEN。
+
+建立TCP连接的过程需要交换3个TCP分组（packet），称为三次握手。
+
+
+
+#### 4.被动连接建立
+
+被动连接建立并不是源于内核，而是在接收到一个连接请求的SYN分组后触发。因而其起点时tcp_v4_rcv函数，如上所述，该函数查找一个监听套接字，并将控制权转移到tcp_v4_do_rcv,代码流程如下：
+
+![](../img/linux-kernel-network-tcp-passive.png)
+
+
+
+调用tcp_v4_hnd_req来执行网络层中建立新连接所需要的各种初始化任务。实际的状态转移发生在tcp_rcv_state_process中，还函数有一个长的switch/case语句组成，区分各种kennel的套接字状态来调用适当的函数。
+
+#### 5. 主动连接建立
+
+主动连接建立发送时，是通过用户空间应用程序调用open库函数，发出socketcall系统调用到达内核函数tcp_v4_connect，其代码流程如下：
+
+![](../img/linux-kernel-network-active-process.png)
+
+#### 6. 分组传输 packet transport
+
+建立了一个连接之后，数据可以在计算机之间传输。该过程在某些状态下很麻烦。因为TCP有几个特性，要求在相互通行的主机之间进行广泛的控制和提供一些安全过程。如下所述：
+
+- 按可保证的次序传输字节流；
+- 通过自动化机制重传丢失的分组；
+- 每个方向上的数据流都独立控制，并与对应的主机的速度匹配。
+
+因为大多数的连接属于TCP的，实现的速度和效率是关键的，因此Linux内核借助于技巧和优化。
+
+对于数据的丢失主要依赖这些解决方案。
+
+基于序号来确认分组的概念，也用于普通的分组。但是与上文提到的内容相比，序列号揭示了有关数据传输的更多东西。序列号根据那种发难生成分配？在建立连接时，生成一个随机数，接下来使用一种系统化的方法来支持对所有进入分组的确认。
+
+TCP使用一种累积式确认方案。这意味着一次确认将涵盖一个连续的字节范围。通过ack字段发送的数字将确认数据流在上一个ACK数目和当前ACK数目之间的所有字节。ACK数目确认了此前所有字节，其中最后一个字节的索引号比ACK数目小1，因此ACK数目也表示下一个字节的索引号。
+
+该机制也用于跟踪丢失的分组。请注意，TCP没有提供显式的重传请求机制。
+
+
+
+
+
+#### 7. 接收分组
+
+
+
+#### 8. 发送分组
+
+
+
+### 应用层
+
+
+
+内核和用户空间套接字之间的接口实现在C标准库中，使用了socketcall系统调用。该函数充当了多路分解器，将各种任务分配由不同的过程执行，比如打开一个套接字、绑定或发送数据。
+
+Linux采用了内核套接字的概念，使得用户空间中的套接字的通信简单。对程序使用的每个套接字来说，都对应一个socket结构和sock结构的实例。二者分别充当向下（到内核）和向上的（到用户空间）接口。
+
+#### 1. socket数据结构
+
+socket结构定义如下：
+
+```c
+<net.h>
+struct socket {
+	socket_state state;
+  unsigned long flags;
+  const struct proto_ops *ops;
+  struct file *file;
+  struct sock *sk;
+  short type;
+};
+```
+
+- type指定所用协议类型的数字标识符。
+- state表示套接字的连接状态，可使用下列值（SS代表套接字状态，即socket state的缩写）：
+
+```c
+<net.h>
+typedef enum{
+  SS_FREE=0,//未分配
+  SS_UNCONNECTED,
+  SS_CONNECTED,
+  SS_CONNENTING,
+  SS_DISCONNECTING
+} socket_state;
+```
+
+与传输层协议在建立和关闭连接时使用的状态值毫不相关。它们表示与外界（即用户程序）相关的一般性状态。
+
+- file是一个指针，指向一个伪文件的file实例，用于和套接字通行。
+
+socket的定义并未绑定到具体协议。这也说明了为什么需要用proto_ops指针指向一个数据结构，其中包含用于处理套接字的特定于协议的函数：
+
+```c
+<net.h>
+struct proto_ops {
+	int family;
+  struct module *owner;
+  int (*release) (struct socket *sock);
+  int (*bind) (struct socket *sock,struct sockaddr *myaddr,int socket_len);
+  
+  int (*connect) (struct socket *sock,struct sockaddr *vaddr);
+  
+  int (*socketpair) (struct socket *sock1,struct socket sock2);
+  
+  int (*accept) (struct socket *sock,struct socket *newsock,int fllages);
+  
+  int (*getname) (struct socket *sock,struct socketaddr *addr);
+  
+  unsigned int (*poll) (struct file *file,struct socket *sock,struct poll_table_struct *wait);
+  
+  int (*ioctl) (struct socket *sock,unsigned int cmd,unsigned long arg);
+  
+  int (*compat_ioctl) (struct socket *sock,unsigned int cmd,unsigned long arg);
+  
+  int (*listen) (struct socket *sock,int len);
+  
+  int (*shutdown) (struct socket *sock,int flags);
+  
+  int (*setsockopt) (struct socket *sock,int level,int optname,char __user *optval,int __user *optlen);
+  
+  int (*getsockopt) (struct socket *sock,int level,int optname,char __user *optval,int __user *optlen);
+  
+    int (*compact_setsockopt) (struct socket *sock,int level,int optname,char __user *optval,int __user *optlen);
+  
+    int (*compact_getsockopt) (struct socket *sock,int level,int optname,char __user *optval,int __user *optlen);
+  
+  int (*sendmsg) (struct kiocb *iocb,struct socket *sock,struct msghdr *m,size_t total_len);
+  
+  int (*recvmsg) (struct kiocb *iocb,struct socket *sock,struct msghdr *m,size_t total_len,int flags);
+  
+  int (*mmap) (struct file *file,struct socket *sock,struct vm_area_struct *vma);
+  
+  ssize_t (*sendpage) (struct socket *sock,struct page *page,int offset,size_t size,int flags);
+  
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
