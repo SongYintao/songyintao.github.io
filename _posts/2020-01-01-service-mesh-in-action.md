@@ -185,6 +185,39 @@ pilot使用Kubernetes的Service，仅仅使用它的服务发现功能，而不�
 
 
 
+除了上面三种途径之外，还可以这样实现（**基于Nacos的实现**）：
+
+![](../img/service-mesh-new-case.png)
+
+**服务注册、发现主要流程如下：**
+
+1. **服务注册**：service端应用启动时，SDK调用Nacos的API，进行服务注册（如开启mesh，注册的port为sidecar监听的端口。否则，使用service自己的端口）。
+
+2. **服务配置下发**：Nacos获取到服务的注册信息之后，Pilot会进行拉取同步并将最新的配置、服务信息（服务名称+ip列表）下发到相关的sidecar代理之中。
+
+3. **服务发现／订阅**：Client端应用启动时，SDK向Nacos订阅相关的服务，获取相关的service ip的信息，并监听相关服务的变更。
+
+   至此，服务注册、订阅相关的流程完成。
+
+   
+
+**客户端服务调用流程如下：**
+
+**case1**:  **client未开启mesh功能**
+
+客户端直接使用**服务发现／订阅**获取到的service ip进行RPC直接调用。
+
+**case2:  client开启mesh功能**
+
+RPC请求首先将service ip替换为localhost，并且将所调用的服务标识+原始的service ip注入到RPC的请求头中。client sidecar拦截到该RPC请求之后。首先，从请求头之中获取到服务的标识，用于从pilot下发的配置中，根据负载均衡等策略，获取需要转发到的目标地址。同时，进行metric统计。如果该步骤未能获取到相应的转发地址ip+port信息。使用兜底的service ip+port进行RPC调用。
+
+注：
+
+1. 如果服务端的sidecar不存在（非mesh化），直接调用service的ip+port；如上图2.2、2.3.2 RPC直接调用。
+2. 如果服务端存在sidecar（mesh化），间接调用sidecar的ip+port，然后再转发到service的本地ip+port。如上图2.1、2.3.1 RPC间接调用。
+
+
+
 ##### 服务发现如何实现？
 
 **服务的发现主要有下面几个途径**：
