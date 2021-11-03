@@ -4,7 +4,7 @@
 # baseurl is the website's URL without the hostname
 
 # If you are building a simple GitHub user page (https://username.github.io) then use these settings:
-url: "https://songyintao.github.io"
+url: "https://gilfoyle2021.github.io"
 baseurl: ""
 
 # If you are building a GitHub project page then use these settings:
@@ -14,25 +14,25 @@ baseurl: ""
 # Of course don't forget to change the username and projectname to YOUR username and project
 
 # Name of website
-title: Gilfoyle.Song
+title: 宋银涛的博客
 
 # Short description of your site
-description: Gilfoyle's learning blogs
+description: 宋银涛的学习博客
 
 # --- Navigation bar options --- #
 
 # List of links in the navigation bar
 navbar-links:
   About Me: "aboutme"
-  GitBooks:
-    - Netty: "http://deanattali.com/beautiful-jekyll/"
-    - RxJava: "http://www.markdowntutorial.com/"
-    - Go: "https://pages.github.com/"
-  Author's home: "http://deanattali.com"
+  # GitBooks:
+  #   - Netty: "http://deanattali.com/beautiful-jekyll/"
+  #   - RxJava: "http://www.markdowntutorial.com/"
+  #   - Go: "https://pages.github.com/"
+  # Author's home: "http://deanattali.com"
 
 # Image to show in the navigation bar - image must be a square (width = height)
 # Remove this parameter if you don't want an image in the navbar
-avatar: "/img/avatar-icon.png"
+avatar: "/img/avatar-icon.jpg"
 
 # If you want to have an image logo in the top-left corner instead of the title text,
 # then specify the following parameter

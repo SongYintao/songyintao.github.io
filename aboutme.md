@@ -4,13 +4,10 @@ title: About me
 subtitle: Why you'd want to go on a date with me
 ---
 
-My name is Gilfoyle Song. I have the following qualities:
+我是宋银涛，蚂蚁集团金融云开发工程师:
 
-- I am a java developer
-- I'm extremely loyal to my family
-
-What else do you need?
-
-### my history
-
-To be honest, I'm having some trouble remembering right now, so why don't you just watch [my movie](http://en.wikipedia.org/wiki/The_Princess_Bride_%28film%29) and it will answer **all** your questions.
+- java、gloang开发工程师
+- 熟悉Kubernetes、docker、containerd、runc、Prometheus等
+- Linux内核爱好者
+- 新晋奶爸
+- 热爱读书，金融、哲学、心理学、历史等
